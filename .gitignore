@@ -1,0 +1,9 @@
+# Ignore object files
+*.o
+
+# Ignore build artifacts
+*.dSYM/
+
+# Ignore editor swap/backup files
+*~
+*.swp
