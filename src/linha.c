@@ -1,141 +1,166 @@
+/**
+ * @file linha.c
+ * @brief Implementação do TAD Linha (contrato em linha.h).
+ */
+
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include <math.h>
+
 #include "linha.h"
 
-#define LINHA_SW_DEFAULT 1.0
-
-typedef struct LinhaStruct {
+/* Definição concreta do tipo. Fica no .c (proibido struct no .h). */
+struct linha {
     int    id;
     double x1;
     double y1;
     double x2;
     double y2;
-    char  *cor;
-    double stroke_width;   /* espessura visual (SVG stroke-width)       */
-} LinhaStruct;
+    char  *cor;   /* cor própria (string alocada) */
+};
 
-static char *dupString(const char *s) {
-    if (s == NULL) return NULL;
-    size_t len = strlen(s) + 1;
-    char *copy = (char *)malloc(len);
-    if (copy == NULL) return NULL;
-    memcpy(copy, s, len);
-    return copy;
+/* Duplica uma string em memória própria. Substitui strdup() para não depender
+   de macros POSIX sob -std=c99. Retorna NULL se s for NULL ou em falha. */
+static char *dup_str(const char *s)
+{
+    size_t n;
+    char  *novo;
+
+    if (s == NULL) {
+        return NULL;
+    }
+    n = strlen(s) + 1;
+    novo = malloc(n);
+    if (novo != NULL) {
+        memcpy(novo, s, n);
+    }
+    return novo;
 }
 
-static bool parametrosValidos(int id, const char *cor) {
-    return id > 0 && cor != NULL;
-}
+/* -------------------------------------------------------------------------- */
+/*  Criação / clonagem / destruição                                           */
+/* -------------------------------------------------------------------------- */
 
-Linha criaLinha(int id, double x1, double y1, double x2, double y2,
-                const char *cor) {
-    if (!parametrosValidos(id, cor)) return NULL;
+Linha linha_criar(int id, double x1, double y1, double x2, double y2,
+                  const char *cor)
+{
+    Linha l = malloc(sizeof(struct linha));
+    if (l == NULL) {
+        return NULL;
+    }
 
-    LinhaStruct *l = (LinhaStruct *)malloc(sizeof(LinhaStruct));
-    if (l == NULL) return NULL;
+    l->id = id;
+    l->x1 = x1;
+    l->y1 = y1;
+    l->x2 = x2;
+    l->y2 = y2;
+    l->cor = dup_str(cor);
 
-    l->cor = dupString(cor);
     if (l->cor == NULL) {
         free(l);
         return NULL;
     }
-
-    l->id           = id;
-    l->x1           = x1;
-    l->y1           = y1;
-    l->x2           = x2;
-    l->y2           = y2;
-    l->stroke_width = LINHA_SW_DEFAULT;
-    return (Linha)l;
+    return l;
 }
 
-void destroiLinha(Linha l) {
-    if (l == NULL) return;
-    LinhaStruct *ls = (LinhaStruct *)l;
-    free(ls->cor);
-    free(ls);
-}
-
-int getIdLinha(Linha l) {
-    if (l == NULL) return -1;
-    return ((LinhaStruct *)l)->id;
-}
-
-double getX1Linha(Linha l) {
-    if (l == NULL) return 0.0;
-    return ((LinhaStruct *)l)->x1;
-}
-
-double getY1Linha(Linha l) {
-    if (l == NULL) return 0.0;
-    return ((LinhaStruct *)l)->y1;
-}
-
-double getX2Linha(Linha l) {
-    if (l == NULL) return 0.0;
-    return ((LinhaStruct *)l)->x2;
-}
-
-double getY2Linha(Linha l) {
-    if (l == NULL) return 0.0;
-    return ((LinhaStruct *)l)->y2;
-}
-
-const char *getCorLinha(Linha l) {
-    if (l == NULL) return NULL;
-    return ((LinhaStruct *)l)->cor;
-}
-
-
-void transladaLinha(Linha l, double dx, double dy) {
-    if (l == NULL) return;
-    LinhaStruct *ls = (LinhaStruct *)l;
-    ls->x1 += dx;
-    ls->y1 += dy;
-    ls->x2 += dx;
-    ls->y2 += dy;
-}
-
-void setCorLinha(Linha l, const char *cor) {
-    if (l == NULL || cor == NULL) return;
-
-    LinhaStruct *ls = (LinhaStruct *)l;
-    char *novaCor = dupString(cor);
-    if (novaCor == NULL) return;
-
-    free(ls->cor);
-    ls->cor = novaCor;
-}
-
-bool contemPontoLinha(Linha l, double px, double py) {
-    if (l == NULL) return false;
-    LinhaStruct *ls = (LinhaStruct *)l;
-
-    double dx = ls->x2 - ls->x1;
-    double dy = ls->y2 - ls->y1;
-    double len_sq = dx * dx + dy * dy;
-    if (len_sq == 0.0) {
-        return fabs(px - ls->x1) < 1e-6 && fabs(py - ls->y1) < 1e-6;
+Linha linha_clonar(Linha l, int novo_id)
+{
+    if (l == NULL) {
+        return NULL;
     }
-
-    double t = ((px - ls->x1) * dx + (py - ls->y1) * dy) / len_sq;
-    if (t < 0.0 || t > 1.0) return false;
-
-    double proj_x = ls->x1 + t * dx;
-    double proj_y = ls->y1 + t * dy;
-    double dist = hypot(px - proj_x, py - proj_y);
-    return dist < 1e-6;
+    return linha_criar(novo_id, l->x1, l->y1, l->x2, l->y2, l->cor);
 }
 
-bool dentroRegiaoLinha(Linha l, double rx, double ry,
-                       double rw, double rh) {
-    if (l == NULL) return false;
-    LinhaStruct *ls = (LinhaStruct *)l;
+void linha_destruir(Linha l)
+{
+    if (l == NULL) {
+        return;
+    }
+    free(l->cor);
+    free(l);
+}
 
-    return ls->x1 >= rx && ls->x1 <= rx + rw &&
-           ls->y1 >= ry && ls->y1 <= ry + rh &&
-           ls->x2 >= rx && ls->x2 <= rx + rw &&
-           ls->y2 >= ry && ls->y2 <= ry + rh;
+/* -------------------------------------------------------------------------- */
+/*  Consultas (getters)                                                       */
+/* -------------------------------------------------------------------------- */
+
+int linha_get_id(Linha l)
+{
+    return l->id;
+}
+
+double linha_get_x1(Linha l)
+{
+    return l->x1;
+}
+
+double linha_get_y1(Linha l)
+{
+    return l->y1;
+}
+
+double linha_get_x2(Linha l)
+{
+    return l->x2;
+}
+
+double linha_get_y2(Linha l)
+{
+    return l->y2;
+}
+
+const char *linha_get_cor(Linha l)
+{
+    return l->cor;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Atributos derivados                                                       */
+/* -------------------------------------------------------------------------- */
+
+double linha_comprimento(Linha l)
+{
+    double dx = l->x2 - l->x1;
+    double dy = l->y2 - l->y1;
+    return sqrt(dx * dx + dy * dy);
+}
+
+double linha_largura(Linha l)
+{
+    return linha_comprimento(l);
+}
+
+double linha_altura(Linha l)
+{
+    (void) l;            /* altura é constante; parâmetro mantido por contrato */
+    return 1.5;
+}
+
+double linha_area(Linha l)
+{
+    return 1.5 * linha_comprimento(l);
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Modificações                                                              */
+/* -------------------------------------------------------------------------- */
+
+void linha_mover(Linha l, double dx, double dy)
+{
+    l->x1 += dx;
+    l->y1 += dy;
+    l->x2 += dx;
+    l->y2 += dy;
+}
+
+void linha_set_cor(Linha l, const char *cor)
+{
+    char *nova = dup_str(cor);
+
+    /* Só troca se a cópia deu certo; caso contrário, mantém o estado anterior. */
+    if (nova == NULL) {
+        return;
+    }
+    free(l->cor);
+    l->cor = nova;
 }

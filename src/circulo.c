@@ -1,45 +1,55 @@
+/**
+ * @file circulo.c
+ * @brief Implementação do TAD Circulo (contrato em circulo.h).
+ */
+
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
-#include <math.h>
+
 #include "circulo.h"
 
-typedef struct CirculoStruct {
+/* PI em precisão dupla. Definido aqui porque M_PI não é garantido pelo
+   <math.h> sob -std=c99 estrito. */
+#define PI 3.14159265358979323846
+
+/* Definição concreta do tipo. Fica no .c (proibido struct no .h). */
+struct circulo {
     int    id;
-    double x;
-    double y;
-    double r;
-    char  *corb;
-    char  *corp;
-} CirculoStruct;
+    double x;     /* x do centro (âncora) */
+    double y;     /* y do centro (âncora) */
+    double r;     /* raio */
+    char  *corb;  /* cor da borda (string própria) */
+    char  *corp;  /* cor de preenchimento (string própria) */
+};
 
-static char *dupString(const char *s) {
-    if (s == NULL) return NULL;
-    size_t len = strlen(s) + 1;
-    char *copy = (char *)malloc(len);
-    if (copy == NULL) return NULL;
-    memcpy(copy, s, len);
-    return copy;
+/* Duplica uma string em memória própria. Substitui strdup() para não depender
+   de macros POSIX sob -std=c99. Retorna NULL se s for NULL ou em falha de
+   alocação. */
+static char *dup_str(const char *s)
+{
+    size_t n;
+    char  *novo;
+
+    if (s == NULL) {
+        return NULL;
+    }
+    n = strlen(s) + 1;
+    novo = malloc(n);
+    if (novo != NULL) {
+        memcpy(novo, s, n);
+    }
+    return novo;
 }
 
-static bool parametrosValidos(int id, double r,
-                             const char *corb, const char *corp) {
-    return id > 0 && r > 0.0 && corb != NULL && corp != NULL;
-}
+/* -------------------------------------------------------------------------- */
+/*  Criação / clonagem / destruição                                           */
+/* -------------------------------------------------------------------------- */
 
-Circulo criaCirculo(int id, double x, double y, double r,
-                    const char *corb, const char *corp) {
-    if (!parametrosValidos(id, r, corb, corp)) return NULL;
-
-    CirculoStruct *c = (CirculoStruct *)malloc(sizeof(CirculoStruct));
-    if (c == NULL) return NULL;
-
-    c->corb = dupString(corb);
-    c->corp = dupString(corp);
-    if (c->corb == NULL || c->corp == NULL) {
-        free(c->corb);
-        free(c->corp);
-        free(c);
+Circulo circulo_criar(int id, double x, double y, double r,
+                      const char *corb, const char *corp)
+{
+    Circulo c = malloc(sizeof(struct circulo));
+    if (c == NULL) {
         return NULL;
     }
 
@@ -47,90 +57,117 @@ Circulo criaCirculo(int id, double x, double y, double r,
     c->x  = x;
     c->y  = y;
     c->r  = r;
-    return (Circulo)c;
+    c->corb = dup_str(corb);
+    c->corp = dup_str(corp);
+
+    /* Se qualquer cópia de cor falhou, desfaz tudo para não vazar memória. */
+    if (c->corb == NULL || c->corp == NULL) {
+        free(c->corb);
+        free(c->corp);
+        free(c);
+        return NULL;
+    }
+    return c;
 }
 
-void destroiCirculo(Circulo c) {
-    if (c == NULL) return;
-    CirculoStruct *cs = (CirculoStruct *)c;
-    free(cs->corb);
-    free(cs->corp);
-    free(cs);
+Circulo circulo_clonar(Circulo c, int novo_id)
+{
+    if (c == NULL) {
+        return NULL;
+    }
+    /* Reaproveita circulo_criar, que já copia as cores -> clone independente. */
+    return circulo_criar(novo_id, c->x, c->y, c->r, c->corb, c->corp);
 }
 
-int getIdCirculo(Circulo c) {
-    if (c == NULL) return -1;
-    return ((CirculoStruct *)c)->id;
+void circulo_destruir(Circulo c)
+{
+    if (c == NULL) {
+        return;
+    }
+    free(c->corb);
+    free(c->corp);
+    free(c);
 }
 
-double getXCirculo(Circulo c) {
-    if (c == NULL) return 0.0;
-    return ((CirculoStruct *)c)->x;
+/* -------------------------------------------------------------------------- */
+/*  Consultas (getters)                                                       */
+/* -------------------------------------------------------------------------- */
+
+int circulo_get_id(Circulo c)
+{
+    return c->id;
 }
 
-double getYCirculo(Circulo c) {
-    if (c == NULL) return 0.0;
-    return ((CirculoStruct *)c)->y;
+double circulo_get_x(Circulo c)
+{
+    return c->x;
 }
 
-double getRCirculo(Circulo c) {
-    if (c == NULL) return 0.0;
-    return ((CirculoStruct *)c)->r;
+double circulo_get_y(Circulo c)
+{
+    return c->y;
 }
 
-const char *getCorbCirculo(Circulo c) {
-    if (c == NULL) return NULL;
-    return ((CirculoStruct *)c)->corb;
+double circulo_get_raio(Circulo c)
+{
+    return c->r;
 }
 
-const char *getCorpCirculo(Circulo c) {
-    if (c == NULL) return NULL;
-    return ((CirculoStruct *)c)->corp;
+const char *circulo_get_cor_borda(Circulo c)
+{
+    return c->corb;
 }
 
-void transladaCirculo(Circulo c, double dx, double dy) {
-    if (c == NULL) return;
-    CirculoStruct *cs = (CirculoStruct *)c;
-    cs->x += dx;
-    cs->y += dy;
+const char *circulo_get_cor_preenchimento(Circulo c)
+{
+    return c->corp;
 }
 
-void setCoresCirculo(Circulo c, const char *corb, const char *corp) {
-    if (c == NULL || corb == NULL || corp == NULL) return;
+/* -------------------------------------------------------------------------- */
+/*  Atributos derivados                                                       */
+/* -------------------------------------------------------------------------- */
 
-    CirculoStruct *cs = (CirculoStruct *)c;
-    char *novaCorb = dupString(corb);
-    char *novaCorp = dupString(corp);
-    if (novaCorb == NULL || novaCorp == NULL) {
-        free(novaCorb);
-        free(novaCorp);
+double circulo_area(Circulo c)
+{
+    return PI * c->r * c->r;
+}
+
+double circulo_largura(Circulo c)
+{
+    return 2.0 * c->r;   /* diâmetro */
+}
+
+double circulo_altura(Circulo c)
+{
+    return 2.0 * c->r;   /* diâmetro */
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Modificações                                                              */
+/* -------------------------------------------------------------------------- */
+
+void circulo_mover(Circulo c, double dx, double dy)
+{
+    c->x += dx;
+    c->y += dy;
+}
+
+void circulo_set_cores(Circulo c, const char *corb, const char *corp)
+{
+    char *nova_borda    = dup_str(corb);
+    char *nova_preench  = dup_str(corp);
+
+    /* Só troca se ambas as cópias deram certo; caso contrário, mantém o
+       estado anterior intacto e não vaza as novas alocações. */
+    if (nova_borda == NULL || nova_preench == NULL) {
+        free(nova_borda);
+        free(nova_preench);
         return;
     }
 
-    free(cs->corb);
-    free(cs->corp);
-    cs->corb = novaCorb;
-    cs->corp = novaCorp;
-}
+    free(c->corb);
+    c->corb = nova_borda;
 
-bool contemPontoCirculo(Circulo c, double px, double py) {
-    if (c == NULL) return false;
-    CirculoStruct *cs = (CirculoStruct *)c;
-    
-    double dx = px - cs->x;
-    double dy = py - cs->y;
-    double distancia_sq = dx * dx + dy * dy;
-    double raio_sq = cs->r * cs->r;
-    
-    return distancia_sq <= raio_sq;
-}
-
-bool dentroRegiaoCirculo(Circulo c, double rx, double ry,
-                         double rw, double rh) {
-    if (c == NULL) return false;
-    CirculoStruct *cs = (CirculoStruct *)c;
-
-    return cs->x - cs->r >= rx && cs->y - cs->r >= ry &&
-           cs->x + cs->r <= rx + rw &&
-           cs->y + cs->r <= ry + rh;
+    free(c->corp);
+    c->corp = nova_preench;
 }

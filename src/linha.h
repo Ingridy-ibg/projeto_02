@@ -1,114 +1,183 @@
 #ifndef LINHA_H
 #define LINHA_H
 
-#include <stdbool.h>
+/**
+ * @file linha.h
+ * @brief TAD Linha.
+ *
+ * Representa um segmento de reta do plano cartesiano, conforme o comando .geo:
+ *
+ *     l i x1 y1 x2 y2 cor
+ *
+ * onde:
+ *   - i              : identificador inteiro (>= 1) da forma;
+ *   - (x1, y1)       : primeira extremidade;
+ *   - (x2, y2)       : segunda extremidade;
+ *   - cor            : cor da linha (string no padrão de cores SVG).
+ *
+ * Diferenças importantes em relação a círculo/retângulo:
+ *   - a linha tem APENAS UMA cor (não há borda e preenchimento separados);
+ *   - a linha é definida por DUAS âncoras (suas extremidades). Para fins de
+ *     ordenação default e de posicionamento (comandos find/findrm), adota-se a
+ *     PRIMEIRA extremidade (x1, y1) como âncora de referência.
+ *
+ * Convenções de ordenação (definidas no enunciado):
+ *   - altura da linha     : constante 1.5;
+ *   - largura da linha    : igual ao seu comprimento (ver linha_largura);
+ *   - área da linha       : 1.5 * comprimento  (= altura * largura);
+ *   - na ordenação por cor (c), usa-se a cor da linha.
+ *
+ * Este é um TAD OPACO: a struct é definida apenas em linha.c.
+ *
+ * Propriedade (ownership):
+ *   - a string de cor passada é COPIADA internamente; o chamador continua dono
+ *     do buffer original;
+ *   - a string devolvida por linha_get_cor pertence à linha; não liberar nem
+ *     modificar;
+ *   - toda Linha criada deve ser liberada com linha_destruir().
+ */
 
 /**
- * @typedef Linha
- * @brief Ponteiro opaco para a estrutura interna da linha.
+ * @brief Ponteiro opaco para uma linha.
+ *
+ * A struct subjacente é definida apenas em linha.c (contrato: nenhuma struct
+ * é definida neste cabeçalho).
  */
-typedef void *Linha;
+typedef struct linha *Linha;
 
 /**
- * @brief Cria uma nova linha com os parâmetros fornecidos.
- * @param id   Identificador inteiro único da linha.
- * @param x1   Coordenada x do ponto inicial da linha.
- * @param y1   Coordenada y do ponto inicial da linha.
- * @param x2   Coordenada x do ponto final da linha.
- * @param y2   Coordenada y do ponto final da linha.
- * @param cor  String com a cor da linha (padrão SVG).
- * @return Ponteiro (Linha) para a estrutura alocada.
- * Retorna NULL em caso de falha de alocação ou parâmetros inválidos.
+ * @brief Cria uma linha.
+ *
+ * @param id   Identificador inteiro da forma (>= 1).
+ * @param x1   x da primeira extremidade.
+ * @param y1   y da primeira extremidade.
+ * @param x2   x da segunda extremidade.
+ * @param y2   y da segunda extremidade.
+ * @param cor  Cor da linha (string não nula, padrão SVG). É copiada.
+ *
+ * @return Nova Linha alocada dinamicamente, ou NULL em falha de alocação.
+ *         O chamador deve liberá-la com linha_destruir().
+ *
+ * @pre cor != NULL.
  */
-Linha criaLinha(int id, double x1, double y1, double x2, double y2,
-                const char *cor);
+Linha linha_criar(int id, double x1, double y1, double x2, double y2,
+                  const char *cor);
 
 /**
- * @brief Libera a memória alocada pela linha.
- * @param l Ponteiro para a linha a ser destruída.
+ * @brief Cria uma cópia independente de uma linha, com novo identificador.
+ *
+ * Útil para o comando de clonagem (cm). A cópia possui sua própria string de
+ * cor; alterações em uma não afetam a outra.
+ *
+ * @param l        Linha a clonar (não nula).
+ * @param novo_id  Identificador do clone (>= 1).
+ * @return Nova Linha idêntica a @p l (exceto pelo id), ou NULL em falha.
+ * @pre l != NULL.
  */
-void destroiLinha(Linha l);
+Linha linha_clonar(Linha l, int novo_id);
 
 /**
- * @brief Retorna o identificador da linha.
- * @param l Ponteiro para a linha.
- * @return Identificador inteiro. Retorna -1 se l for NULL.
+ * @brief Libera toda a memória associada a uma linha.
+ *
+ * Após a chamada, @p l não deve mais ser usado. Chamar com NULL é seguro.
+ *
+ * @param l Linha a destruir (pode ser NULL).
  */
-int getIdLinha(Linha l);
+void linha_destruir(Linha l);
 
-/**
- * @brief Retorna a coordenada x do ponto inicial da linha.
- * @param l Ponteiro para a linha.
- * @return Valor de x1. Retorna 0.0 se l for NULL.
- */
-double getX1Linha(Linha l);
+/* -------------------------------------------------------------------------- */
+/*  Consultas (getters)                                                       */
+/* -------------------------------------------------------------------------- */
 
-/**
- * @brief Retorna a coordenada y do ponto inicial da linha.
- * @param l Ponteiro para a linha.
- * @return Valor de y1. Retorna 0.0 se l for NULL.
- */
-double getY1Linha(Linha l);
+/** @brief Identificador da linha. @pre l != NULL. */
+int linha_get_id(Linha l);
 
-/**
- * @brief Retorna a coordenada x do ponto final da linha.
- * @param l Ponteiro para a linha.
- * @return Valor de x2. Retorna 0.0 se l for NULL.
- */
-double getX2Linha(Linha l);
+/** @brief x da primeira extremidade (âncora de referência). @pre l != NULL. */
+double linha_get_x1(Linha l);
 
-/**
- * @brief Retorna a coordenada y do ponto final da linha.
- * @param l Ponteiro para a linha.
- * @return Valor de y2. Retorna 0.0 se l for NULL.
- */
-double getY2Linha(Linha l);
+/** @brief y da primeira extremidade (âncora de referência). @pre l != NULL. */
+double linha_get_y1(Linha l);
+
+/** @brief x da segunda extremidade. @pre l != NULL. */
+double linha_get_x2(Linha l);
+
+/** @brief y da segunda extremidade. @pre l != NULL. */
+double linha_get_y2(Linha l);
 
 /**
  * @brief Retorna a cor da linha.
- * @param l Ponteiro para a linha.
- * @return String com a cor da linha. Retorna NULL se l for NULL.
+ *
+ * A string retornada pertence à linha; não liberar nem modificar.
+ *
+ * @param l Linha (não nula).
+ * @pre l != NULL.
  */
-const char *getCorLinha(Linha l);
+const char *linha_get_cor(Linha l);
 
+/* -------------------------------------------------------------------------- */
+/*  Atributos derivados (para os critérios de ordenação)                      */
+/* -------------------------------------------------------------------------- */
 
 /**
- * @brief Translada a linha somando dx e dy a ambos os pontos.
- * @param l  Ponteiro para a linha.
- * @param dx Deslocamento em x.
- * @param dy Deslocamento em y.
+ * @brief Comprimento euclidiano da linha: sqrt((x2-x1)^2 + (y2-y1)^2).
+ * @param l Linha (não nula).
+ * @pre l != NULL.
  */
-void transladaLinha(Linha l, double dx, double dy);
+double linha_comprimento(Linha l);
 
 /**
- * @brief Altera a cor da linha.
- * @param l   Ponteiro para a linha.
- * @param cor Nova cor da linha (padrão SVG).
+ * @brief Largura da linha, definida como o seu comprimento.
+ *
+ * Modela a linha como uma faixa fina de altura 1.5: assim
+ * area = largura * altura = comprimento * 1.5, coerente com a definição
+ * de área do enunciado. Usada pelo critério de ordenação por largura (w).
+ *
+ * @param l Linha (não nula).
+ * @pre l != NULL.
  */
-void setCorLinha(Linha l, const char *cor);
+double linha_largura(Linha l);
 
 /**
- * @brief Verifica se o ponto (px, py) está na linha.
- * Considera pontos exatamente na linha (com tolerância numérica).
- * @param l  Ponteiro para a linha.
- * @param px Coordenada x do ponto.
- * @param py Coordenada y do ponto.
- * @return true se o ponto está na linha, false caso contrário ou se l for NULL.
+ * @brief Altura da linha: constante 1.5 (definição do enunciado).
+ * @param l Linha (não nula).
+ * @pre l != NULL.
  */
-bool contemPontoLinha(Linha l, double px, double py);
+double linha_altura(Linha l);
 
 /**
- * @brief Verifica se a linha está inteiramente contida
- * na região definida por (rx, ry, rw, rh).
- * @param l  Ponteiro para a linha.
- * @param rx Coordenada x do canto inferior esquerdo da região.
- * @param ry Coordenada y do canto inferior esquerdo da região.
- * @param rw Largura da região.
- * @param rh Altura da região.
- * @return true se a linha estiver inteiramente dentro da região.
- * false caso contrário ou se l for NULL.
+ * @brief Área da linha: 1.5 * comprimento (definição do enunciado).
+ * @param l Linha (não nula).
+ * @pre l != NULL.
  */
-bool dentroRegiaoLinha(Linha l, double rx, double ry,
-                       double rw, double rh);
+double linha_area(Linha l);
 
-#endif // LINHA_H
+/* -------------------------------------------------------------------------- */
+/*  Modificações                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * @brief Desloca a linha por (dx, dy), transladando AMBAS as extremidades.
+ *
+ * O comprimento é invariante ao deslocamento. Usado na clonagem com movimento
+ * (cm) e no reposicionamento de find/findrm.
+ *
+ * @param l   Linha (não nula).
+ * @param dx  Deslocamento no eixo x.
+ * @param dy  Deslocamento no eixo y.
+ * @pre l != NULL.
+ */
+void linha_mover(Linha l, double dx, double dy);
+
+/**
+ * @brief Altera a cor da linha (comando mc).
+ *
+ * A nova string é copiada; a cor anterior é liberada. Como a linha tem uma
+ * única cor, no comando mc deve-se passar a cor de borda (corb).
+ *
+ * @param l    Linha (não nula).
+ * @param cor  Nova cor (não nula). É copiada.
+ * @pre l != NULL; cor != NULL.
+ */
+void linha_set_cor(Linha l, const char *cor);
+
+#endif /* LINHA_H */

@@ -1,261 +1,197 @@
+/**
+ * @file t_linha.c
+ * @brief Testes unitários do TAD Linha (framework Unity).
+ *
+ * Compilação (exemplo):
+ *   gcc -std=c99 -fstack-protector-all -Wall -Wextra -g \
+ *       -DUNITY_INCLUDE_DOUBLE \
+ *       test/t_linha.c src/linha.c Unity/src/unity.c -o test/t_linha -lm
+ */
+
 #include "unity.h"
 #include "../src/linha.h"
 
-Linha L;
+#define EPS 1e-9
+
+/* Linha padrão: de (0,0) a (3,4) -> comprimento 5 (triângulo 3-4-5). */
+static Linha l;
 
 void setUp(void)
 {
-    L = criaLinha(1, 10.0, 20.0, 50.0, 70.0, "black");
+    l = linha_criar(7, 0.0, 0.0, 3.0, 4.0, "blue");
 }
 
 void tearDown(void)
 {
-    destroiLinha(L);
+    linha_destruir(l);
+    l = NULL;
 }
 
-/* ─────────────────────────────────────────────
-   criaLinha
-   ───────────────────────────────────────────── */
+/* -------------------------------------------------------------------------- */
+/*  Criação e getters                                                         */
+/* -------------------------------------------------------------------------- */
 
-void test_criaLinha_Valido(void)
+void test_criar_nao_retorna_nulo(void)
 {
-    TEST_ASSERT_NOT_NULL_MESSAGE(L, "Linha criada nao deve ser NULL.");
-    TEST_ASSERT_EQUAL_INT_MESSAGE(1,     getIdLinha(L),   "ID deve ser 1.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(10.0,  getX1Linha(L), "X1 deve ser 10.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(20.0,  getY1Linha(L), "Y1 deve ser 20.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(50.0,  getX2Linha(L), "X2 deve ser 50.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(70.0,  getY2Linha(L), "Y2 deve ser 70.0.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("black", getCorLinha(L), "Cor deve ser black.");
+    TEST_ASSERT_NOT_NULL(l);
 }
 
-void test_criaLinha_CorNula(void)
+void test_getters_de_coordenadas(void)
 {
-    Linha l = criaLinha(2, 0.0, 0.0, 10.0, 10.0, NULL);
-    TEST_ASSERT_NULL_MESSAGE(l, "Criar linha com cor NULL deve retornar NULL.");
+    TEST_ASSERT_EQUAL_INT(7, linha_get_id(l));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 0.0, linha_get_x1(l));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 0.0, linha_get_y1(l));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 3.0, linha_get_x2(l));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 4.0, linha_get_y2(l));
 }
 
-void test_criaLinha_IdInvalido(void)
+void test_getter_de_cor(void)
 {
-    Linha l = criaLinha(0, 0.0, 0.0, 10.0, 10.0, "red");
-    TEST_ASSERT_NULL_MESSAGE(l, "ID 0 deve retornar NULL.");
+    TEST_ASSERT_EQUAL_STRING("blue", linha_get_cor(l));
 }
 
-/* ─────────────────────────────────────────────
-   getters com NULL
-   ───────────────────────────────────────────── */
-
-void test_Getters_LinhaNulo(void)
+/* A cor deve ser COPIADA na criação. */
+void test_cor_eh_copiada_na_criacao(void)
 {
-    TEST_ASSERT_EQUAL_INT_MESSAGE(-1,   getIdLinha(NULL),   "getId(NULL) deve retornar -1.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(0.0, getX1Linha(NULL),  "getX1(NULL) deve retornar 0.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(0.0, getY1Linha(NULL),  "getY1(NULL) deve retornar 0.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(0.0, getX2Linha(NULL),  "getX2(NULL) deve retornar 0.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(0.0, getY2Linha(NULL),  "getY2(NULL) deve retornar 0.0.");
-    TEST_ASSERT_NULL_MESSAGE(getCorLinha(NULL), "getCor(NULL) deve retornar NULL.");
+    char cor[] = "green";
+    Linha ll = linha_criar(8, 1.0, 1.0, 2.0, 2.0, cor);
+    TEST_ASSERT_NOT_NULL(ll);
+
+    cor[0] = 'X';   /* corrompe o buffer original */
+    TEST_ASSERT_EQUAL_STRING("green", linha_get_cor(ll));
+
+    linha_destruir(ll);
 }
 
-/* ─────────────────────────────────────────────
-   transladaLinha
-   ───────────────────────────────────────────── */
+/* -------------------------------------------------------------------------- */
+/*  Atributos derivados                                                       */
+/* -------------------------------------------------------------------------- */
 
-void test_translada_DeslocamentoPositivo(void)
+void test_comprimento(void)
 {
-    transladaLinha(L, 5.0, 10.0);
-
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(15.0, getX1Linha(L), "X1 apos translada deve ser 15.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(30.0, getY1Linha(L), "Y1 apos translada deve ser 30.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(55.0, getX2Linha(L), "X2 apos translada deve ser 55.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(80.0, getY2Linha(L), "Y2 apos translada deve ser 80.0.");
+    TEST_ASSERT_DOUBLE_WITHIN(1e-9, 5.0, linha_comprimento(l));
 }
 
-void test_translada_DeslocamentoNegativo(void)
+void test_largura_eh_comprimento(void)
 {
-    transladaLinha(L, -5.0, -10.0);
-
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(5.0,  getX1Linha(L), "X1 apos translada negativa deve ser 5.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(10.0, getY1Linha(L), "Y1 apos translada negativa deve ser 10.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(45.0, getX2Linha(L), "X2 apos translada negativa deve ser 45.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(60.0, getY2Linha(L), "Y2 apos translada negativa deve ser 60.0.");
+    TEST_ASSERT_DOUBLE_WITHIN(1e-9, 5.0, linha_largura(l));
 }
 
-void test_translada_DeslocamentoZero(void)
+void test_altura_eh_constante(void)
 {
-    transladaLinha(L, 0.0, 0.0);
-
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(10.0, getX1Linha(L), "X1 nao deve mudar com dx=0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(20.0, getY1Linha(L), "Y1 nao deve mudar com dy=0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(50.0, getX2Linha(L), "X2 nao deve mudar com dx=0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(70.0, getY2Linha(L), "Y2 nao deve mudar com dy=0.");
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 1.5, linha_altura(l));
 }
 
-void test_translada_LinhaNulo(void)
+void test_area(void)
 {
-    // Nao deve crashar
-    transladaLinha(NULL, 5.0, 5.0);
-    TEST_ASSERT_TRUE(true);
+    /* 1.5 * comprimento = 1.5 * 5 = 7.5 */
+    TEST_ASSERT_DOUBLE_WITHIN(1e-9, 7.5, linha_area(l));
 }
 
-/* ─────────────────────────────────────────────
-   setCorLinha
-   ───────────────────────────────────────────── */
+/* -------------------------------------------------------------------------- */
+/*  Modificações                                                              */
+/* -------------------------------------------------------------------------- */
 
-void test_setCor_Valido(void)
+void test_mover_translada_ambas_extremidades(void)
 {
-    setCorLinha(L, "red");
-
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("red", getCorLinha(L), "Cor deve ser red.");
+    linha_mover(l, 10.0, -2.0);
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, linha_get_x1(l));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, -2.0, linha_get_y1(l));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 13.0, linha_get_x2(l));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 2.0, linha_get_y2(l));
 }
 
-void test_setCor_MesmaCor(void)
+void test_mover_nao_altera_comprimento(void)
 {
-    setCorLinha(L, "black");
-
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("black", getCorLinha(L), "Cor deve permanecer black.");
+    linha_mover(l, 100.0, 50.0);
+    TEST_ASSERT_DOUBLE_WITHIN(1e-9, 5.0, linha_comprimento(l));
 }
 
-void test_setCor_CorNula(void)
+void test_set_cor_atualiza(void)
 {
-    const char *corOriginal = getCorLinha(L);
-
-    setCorLinha(L, NULL);
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(corOriginal, getCorLinha(L), "Cor nao deve mudar se cor=NULL.");
+    linha_set_cor(l, "red");
+    TEST_ASSERT_EQUAL_STRING("red", linha_get_cor(l));
 }
 
-void test_StringsDuplicadas(void)
+void test_set_cor_copia_o_argumento(void)
 {
-    char cor[] = "red";
-    Linha l = criaLinha(10, 0.0, 0.0, 10.0, 10.0, cor);
-
-    // Modificar a string original
-    cor[0] = 'g'; // "red" -> "ged"
-
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("red", getCorLinha(l), "String deve ser duplicada, nao compartilhada.");
-
-    destroiLinha(l);
+    char nova[] = "purple";
+    linha_set_cor(l, nova);
+    nova[0] = 'Z';
+    TEST_ASSERT_EQUAL_STRING("purple", linha_get_cor(l));
 }
 
-/* ─────────────────────────────────────────────
-   contemPontoLinha
-   ───────────────────────────────────────────── */
-/*
- * Linha L: (10,20) a (50,70)
- * Equacao parametrica: x = 10 + 40t, y = 20 + 50t, t em [0,1]
- */
+/* -------------------------------------------------------------------------- */
+/*  Clonagem                                                                  */
+/* -------------------------------------------------------------------------- */
 
-void test_contemPonto_Dentro(void)
+void test_clone_copia_atributos_com_novo_id(void)
 {
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoLinha(L, 30.0, 45.0),
-        "Ponto (30, 45) deve estar na linha.");
+    Linha clone = linha_clonar(l, 42);
+    TEST_ASSERT_NOT_NULL(clone);
+
+    TEST_ASSERT_EQUAL_INT(42, linha_get_id(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 0.0, linha_get_x1(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 0.0, linha_get_y1(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 3.0, linha_get_x2(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 4.0, linha_get_y2(clone));
+    TEST_ASSERT_EQUAL_STRING("blue", linha_get_cor(clone));
+
+    linha_destruir(clone);
 }
 
-void test_contemPonto_NasPontas(void)
+void test_clone_eh_independente(void)
 {
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoLinha(L, 10.0, 20.0),
-        "Ponto inicial deve estar na linha.");
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoLinha(L, 50.0, 70.0),
-        "Ponto final deve estar na linha.");
+    Linha clone = linha_clonar(l, 42);
+    TEST_ASSERT_NOT_NULL(clone);
+
+    linha_mover(l, 99.0, 99.0);
+    linha_set_cor(l, "white");
+
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 0.0, linha_get_x1(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 3.0, linha_get_x2(clone));
+    TEST_ASSERT_EQUAL_STRING("blue", linha_get_cor(clone));
+
+    linha_destruir(clone);
 }
 
-void test_contemPonto_Fora(void)
+/* -------------------------------------------------------------------------- */
+/*  Robustez                                                                  */
+/* -------------------------------------------------------------------------- */
+
+void test_destruir_nulo_eh_seguro(void)
 {
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoLinha(L, 30.0, 46.0),
-        "Ponto fora da linha nao deve estar dentro.");
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoLinha(L, 5.0, 15.0),
-        "Ponto antes do inicio nao deve estar dentro.");
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoLinha(L, 55.0, 75.0),
-        "Ponto apos o fim nao deve estar dentro.");
+    linha_destruir(NULL);
+    TEST_PASS();
 }
 
-void test_contemPonto_LinhaNulo(void)
-{
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoLinha(NULL, 30.0, 45.0),
-        "NULL deve retornar false.");
-}
-
-/* ─────────────────────────────────────────────
-   dentroRegiaoLinha
-   ───────────────────────────────────────────── */
-/*
- * Linha L: (10,20) a (50,70)
- */
-
-void test_dentroRegiao_TotalmenteContido(void)
-{
-    // Regiao maior que a linha
-    TEST_ASSERT_TRUE_MESSAGE(dentroRegiaoLinha(L, 0.0, 0.0, 200.0, 200.0),
-        "Linha deve estar dentro de uma regiao maior.");
-}
-
-void test_dentroRegiao_ExatamenteIgual(void)
-{
-    // Regiao que contem exatamente a linha
-    TEST_ASSERT_TRUE_MESSAGE(dentroRegiaoLinha(L, 10.0, 20.0, 40.0, 50.0),
-        "Linha deve estar dentro de uma regiao que a contem exatamente.");
-}
-
-void test_dentroRegiao_Fora(void)
-{
-    // Regiao menor — linha nao cabe inteiramente
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoLinha(L, 15.0, 20.0, 40.0, 50.0),
-        "Linha nao deve caber em regiao que corta o inicio.");
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoLinha(L, 10.0, 25.0, 40.0, 50.0),
-        "Linha nao deve caber em regiao que corta abaixo.");
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoLinha(L, 10.0, 20.0, 35.0, 50.0),
-        "Linha nao deve caber em regiao que corta o fim.");
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoLinha(L, 10.0, 20.0, 40.0, 45.0),
-        "Linha nao deve caber em regiao que corta acima.");
-}
-
-void test_dentroRegiao_RegiaoZero(void)
-{
-    // Regiao com largura zero
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoLinha(L, 10.0, 20.0, 0.0, 50.0),
-        "Linha nao deve caber em regiao com w=0.");
-    // Regiao com altura zero
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoLinha(L, 10.0, 20.0, 40.0, 0.0),
-        "Linha nao deve caber em regiao com h=0.");
-}
-
-void test_dentroRegiao_LinhaNulo(void)
-{
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoLinha(NULL, 0.0, 0.0, 200.0, 200.0),
-        "NULL deve retornar false.");
-}
-
-/* ─────────────────────────────────────────────
-   main
-   ───────────────────────────────────────────── */
+/* -------------------------------------------------------------------------- */
+/*  Runner                                                                    */
+/* -------------------------------------------------------------------------- */
 
 int main(void)
 {
     UNITY_BEGIN();
 
-    RUN_TEST(test_criaLinha_Valido);
-    RUN_TEST(test_criaLinha_CorNula);
-    RUN_TEST(test_criaLinha_IdInvalido);
+    RUN_TEST(test_criar_nao_retorna_nulo);
+    RUN_TEST(test_getters_de_coordenadas);
+    RUN_TEST(test_getter_de_cor);
+    RUN_TEST(test_cor_eh_copiada_na_criacao);
 
-    RUN_TEST(test_Getters_LinhaNulo);
+    RUN_TEST(test_comprimento);
+    RUN_TEST(test_largura_eh_comprimento);
+    RUN_TEST(test_altura_eh_constante);
+    RUN_TEST(test_area);
 
-    RUN_TEST(test_translada_DeslocamentoPositivo);
-    RUN_TEST(test_translada_DeslocamentoNegativo);
-    RUN_TEST(test_translada_DeslocamentoZero);
-    RUN_TEST(test_translada_LinhaNulo);
+    RUN_TEST(test_mover_translada_ambas_extremidades);
+    RUN_TEST(test_mover_nao_altera_comprimento);
+    RUN_TEST(test_set_cor_atualiza);
+    RUN_TEST(test_set_cor_copia_o_argumento);
 
-    RUN_TEST(test_setCor_Valido);
-    RUN_TEST(test_setCor_MesmaCor);
-    RUN_TEST(test_setCor_CorNula);
-    RUN_TEST(test_StringsDuplicadas);
+    RUN_TEST(test_clone_copia_atributos_com_novo_id);
+    RUN_TEST(test_clone_eh_independente);
 
-    RUN_TEST(test_contemPonto_Dentro);
-    RUN_TEST(test_contemPonto_NasPontas);
-    RUN_TEST(test_contemPonto_Fora);
-    RUN_TEST(test_contemPonto_LinhaNulo);
-
-    RUN_TEST(test_dentroRegiao_TotalmenteContido);
-    RUN_TEST(test_dentroRegiao_ExatamenteIgual);
-    RUN_TEST(test_dentroRegiao_Fora);
-    RUN_TEST(test_dentroRegiao_RegiaoZero);
-    RUN_TEST(test_dentroRegiao_LinhaNulo);
+    RUN_TEST(test_destruir_nulo_eh_seguro);
 
     return UNITY_END();
 }
