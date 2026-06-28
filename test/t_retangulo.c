@@ -1,300 +1,193 @@
+/**
+ * @file t_retangulo.c
+ * @brief Testes unitários do TAD Retangulo (framework Unity).
+ *
+ * Compilação (exemplo):
+ *   gcc -std=c99 -fstack-protector-all -Wall -Wextra -g \
+ *       -DUNITY_INCLUDE_DOUBLE \
+ *       test/t_retangulo.c src/retangulo.c Unity/src/unity.c \
+ *       -o test/t_retangulo -lm
+ */
+
 #include "unity.h"
 #include "../src/retangulo.h"
 
-Retangulo R;
+#define EPS 1e-9
+
+/* Retângulo padrão: âncora (10,20), 4 de largura por 5 de altura -> área 20. */
+static Retangulo r;
 
 void setUp(void)
 {
-    R = criaRetangulo(1, 10.0, 20.0, 100.0, 50.0, "black", "blue");
+    r = retangulo_criar(3, 10.0, 20.0, 4.0, 5.0, "black", "yellow");
 }
 
 void tearDown(void)
 {
-    destroiRetangulo(R);
+    retangulo_destruir(r);
+    r = NULL;
 }
 
-/* ─────────────────────────────────────────────
-   criaRetangulo
-   ───────────────────────────────────────────── */
+/* -------------------------------------------------------------------------- */
+/*  Criação e getters                                                         */
+/* -------------------------------------------------------------------------- */
 
-void test_criaRetangulo_Valido(void)
+void test_criar_nao_retorna_nulo(void)
 {
-    TEST_ASSERT_NOT_NULL_MESSAGE(R, "Retangulo criado nao deve ser NULL.");
-    TEST_ASSERT_EQUAL_INT_MESSAGE(1,     getIdRetangulo(R),   "ID deve ser 1.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(10.0,  getXRetangulo(R), "X deve ser 10.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(20.0,  getYRetangulo(R), "Y deve ser 20.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(100.0, getWRetangulo(R), "W deve ser 100.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(50.0,  getHRetangulo(R), "H deve ser 50.0.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("black", getCorbRetangulo(R), "Cor da borda deve ser black.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("blue",  getCorpRetangulo(R), "Cor do preenchimento deve ser blue.");
+    TEST_ASSERT_NOT_NULL(r);
 }
 
-void test_criaRetangulo_Nulo_CorNula(void)
+void test_getters_basicos(void)
 {
-    Retangulo r = criaRetangulo(2, 0.0, 0.0, 10.0, 10.0, NULL, NULL);
-    TEST_ASSERT_NULL_MESSAGE(r, "Criar retangulo com cores NULL deve retornar NULL.");
+    TEST_ASSERT_EQUAL_INT(3, retangulo_get_id(r));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, retangulo_get_x(r));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 20.0, retangulo_get_y(r));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 4.0, retangulo_get_largura(r));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 5.0, retangulo_get_altura(r));
 }
 
-void test_criaRetangulo_DimensaoInvalida(void)
+void test_getters_de_cor(void)
 {
-    Retangulo r1 = criaRetangulo(2, 0.0, 0.0, 0.0,  10.0, "red", "green");
-    Retangulo r2 = criaRetangulo(3, 0.0, 0.0, 10.0,  0.0, "red", "green");
-    Retangulo r3 = criaRetangulo(4, 0.0, 0.0, -5.0, 10.0, "red", "green");
-    Retangulo r4 = criaRetangulo(5, 0.0, 0.0, 10.0, -5.0, "red", "green");
-
-    TEST_ASSERT_NULL_MESSAGE(r1, "w=0 deve retornar NULL.");
-    TEST_ASSERT_NULL_MESSAGE(r2, "h=0 deve retornar NULL.");
-    TEST_ASSERT_NULL_MESSAGE(r3, "w negativo deve retornar NULL.");
-    TEST_ASSERT_NULL_MESSAGE(r4, "h negativo deve retornar NULL.");
+    TEST_ASSERT_EQUAL_STRING("black", retangulo_get_cor_borda(r));
+    TEST_ASSERT_EQUAL_STRING("yellow", retangulo_get_cor_preenchimento(r));
 }
 
-void test_criaRetangulo_IdInvalido(void)
+/* As cores devem ser COPIADAS na criação. */
+void test_cores_sao_copiadas_na_criacao(void)
 {
-    Retangulo r = criaRetangulo(0, 0.0, 0.0, 10.0, 10.0, "red", "green");
-    TEST_ASSERT_NULL_MESSAGE(r, "ID 0 deve retornar NULL.");
+    char borda[] = "blue";
+    char preench[] = "green";
+
+    Retangulo rr = retangulo_criar(4, 0.0, 0.0, 1.0, 1.0, borda, preench);
+    TEST_ASSERT_NOT_NULL(rr);
+
+    borda[0] = 'X';
+    preench[0] = 'Y';
+
+    TEST_ASSERT_EQUAL_STRING("blue", retangulo_get_cor_borda(rr));
+    TEST_ASSERT_EQUAL_STRING("green", retangulo_get_cor_preenchimento(rr));
+
+    retangulo_destruir(rr);
 }
 
-/* ─────────────────────────────────────────────
-   getters com NULL
-   ───────────────────────────────────────────── */
+/* -------------------------------------------------------------------------- */
+/*  Atributos derivados                                                       */
+/* -------------------------------------------------------------------------- */
 
-void test_Getters_RetanguloNulo(void)
+void test_area(void)
 {
-    TEST_ASSERT_EQUAL_INT_MESSAGE(-1,   getIdRetangulo(NULL),   "getId(NULL) deve retornar -1.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(0.0, getXRetangulo(NULL),  "getX(NULL) deve retornar 0.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(0.0, getYRetangulo(NULL),  "getY(NULL) deve retornar 0.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(0.0, getWRetangulo(NULL),  "getW(NULL) deve retornar 0.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(0.0, getHRetangulo(NULL),  "getH(NULL) deve retornar 0.0.");
-    TEST_ASSERT_NULL_MESSAGE(getCorbRetangulo(NULL), "getCorb(NULL) deve retornar NULL.");
-    TEST_ASSERT_NULL_MESSAGE(getCorpRetangulo(NULL), "getCorp(NULL) deve retornar NULL.");
+    /* 4 * 5 = 20 */
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 20.0, retangulo_area(r));
 }
 
-/* ─────────────────────────────────────────────
-   transladaRetangulo
-   ───────────────────────────────────────────── */
+/* -------------------------------------------------------------------------- */
+/*  Modificações                                                              */
+/* -------------------------------------------------------------------------- */
 
-void test_translada_DeslocamentoPositivo(void)
+void test_mover_desloca_a_ancora(void)
 {
-    transladaRetangulo(R, 5.0, 10.0);
-
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(15.0, getXRetangulo(R), "X apos translada deve ser 15.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(30.0, getYRetangulo(R), "Y apos translada deve ser 30.0.");
+    retangulo_mover(r, 3.0, -7.5);
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 13.0, retangulo_get_x(r));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 12.5, retangulo_get_y(r));
 }
 
-void test_translada_DeslocamentoNegativo(void)
+void test_mover_nao_altera_dimensoes(void)
 {
-    transladaRetangulo(R, -5.0, -10.0);
-
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(5.0,  getXRetangulo(R), "X apos translada negativa deve ser 5.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(10.0, getYRetangulo(R), "Y apos translada negativa deve ser 10.0.");
+    retangulo_mover(r, 100.0, 100.0);
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 4.0, retangulo_get_largura(r));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 5.0, retangulo_get_altura(r));
 }
 
-void test_translada_DeslocamentoZero(void)
+void test_set_cores_atualiza(void)
 {
-    transladaRetangulo(R, 0.0, 0.0);
-
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(10.0, getXRetangulo(R), "X nao deve mudar com dx=0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(20.0, getYRetangulo(R), "Y nao deve mudar com dy=0.");
+    retangulo_set_cores(r, "red", "purple");
+    TEST_ASSERT_EQUAL_STRING("red", retangulo_get_cor_borda(r));
+    TEST_ASSERT_EQUAL_STRING("purple", retangulo_get_cor_preenchimento(r));
 }
 
-void test_translada_NaoAlteraDimensoes(void)
+void test_set_cores_copia_os_argumentos(void)
 {
-    transladaRetangulo(R, 99.0, 99.0);
+    char nb[] = "cyan";
+    char np[] = "magenta";
 
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(100.0, getWRetangulo(R), "W nao deve mudar apos translada.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(50.0,  getHRetangulo(R), "H nao deve mudar apos translada.");
+    retangulo_set_cores(r, nb, np);
+    nb[0] = 'Z';
+    np[0] = 'W';
+
+    TEST_ASSERT_EQUAL_STRING("cyan", retangulo_get_cor_borda(r));
+    TEST_ASSERT_EQUAL_STRING("magenta", retangulo_get_cor_preenchimento(r));
 }
 
-void test_translada_RetanguloNulo(void)
+/* -------------------------------------------------------------------------- */
+/*  Clonagem                                                                  */
+/* -------------------------------------------------------------------------- */
+
+void test_clone_copia_atributos_com_novo_id(void)
 {
-    // Nao deve crashar
-    transladaRetangulo(NULL, 5.0, 5.0);
-    TEST_ASSERT_TRUE(true);
+    Retangulo clone = retangulo_clonar(r, 77);
+    TEST_ASSERT_NOT_NULL(clone);
+
+    TEST_ASSERT_EQUAL_INT(77, retangulo_get_id(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, retangulo_get_x(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 20.0, retangulo_get_y(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 4.0, retangulo_get_largura(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 5.0, retangulo_get_altura(clone));
+    TEST_ASSERT_EQUAL_STRING("black", retangulo_get_cor_borda(clone));
+    TEST_ASSERT_EQUAL_STRING("yellow", retangulo_get_cor_preenchimento(clone));
+
+    retangulo_destruir(clone);
 }
 
-/* ─────────────────────────────────────────────
-   setCoresRetangulo
-   ───────────────────────────────────────────── */
-
-void test_setCores_Valido(void)
+void test_clone_eh_independente(void)
 {
-    setCoresRetangulo(R, "red", "yellow");
+    Retangulo clone = retangulo_clonar(r, 77);
+    TEST_ASSERT_NOT_NULL(clone);
 
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("red",    getCorbRetangulo(R), "Cor da borda deve ser red.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("yellow", getCorpRetangulo(R), "Cor do preenchimento deve ser yellow.");
+    retangulo_mover(r, 50.0, 50.0);
+    retangulo_set_cores(r, "white", "white");
+
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, retangulo_get_x(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 20.0, retangulo_get_y(clone));
+    TEST_ASSERT_EQUAL_STRING("black", retangulo_get_cor_borda(clone));
+    TEST_ASSERT_EQUAL_STRING("yellow", retangulo_get_cor_preenchimento(clone));
+
+    retangulo_destruir(clone);
 }
 
-void test_setCores_MesmaCor(void)
+/* -------------------------------------------------------------------------- */
+/*  Robustez                                                                  */
+/* -------------------------------------------------------------------------- */
+
+void test_destruir_nulo_eh_seguro(void)
 {
-    setCoresRetangulo(R, "black", "blue");
-
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("black", getCorbRetangulo(R), "Cor da borda deve permanecer black.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("blue",  getCorpRetangulo(R), "Cor do preenchimento deve permanecer blue.");
+    retangulo_destruir(NULL);
+    TEST_PASS();
 }
 
-void test_setCores_UmaCorNula(void)
-{
-    const char *corbOriginal = getCorbRetangulo(R);
-    const char *corpOriginal = getCorpRetangulo(R);
-
-    setCoresRetangulo(R, NULL, "yellow");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(corbOriginal, getCorbRetangulo(R), "Cor da borda nao deve mudar se corb=NULL.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(corpOriginal, getCorpRetangulo(R), "Cor do preenchimento nao deve mudar se corb=NULL.");
-
-    setCoresRetangulo(R, "red", NULL);
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(corbOriginal, getCorbRetangulo(R), "Cor da borda nao deve mudar se corp=NULL.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(corpOriginal, getCorpRetangulo(R), "Cor do preenchimento nao deve mudar se corp=NULL.");
-}
-
-void test_StringsDuplicadas(void)
-{
-    char corb[] = "red";
-    char corp[] = "blue";
-    Retangulo r = criaRetangulo(10, 0.0, 0.0, 10.0, 10.0, corb, corp);
-
-    // Modificar as strings originais
-    corb[0] = 'g'; // "red" -> "ged"
-    corp[0] = 'y'; // "blue" -> "ylue"
-
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("red", getCorbRetangulo(r), "Strings devem ser duplicadas, nao compartilhadas.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("blue", getCorpRetangulo(r), "Strings devem ser duplicadas, nao compartilhadas.");
-
-    destroiRetangulo(r);
-}
-
-/* ─────────────────────────────────────────────
-   contemPontoRetangulo
-   ───────────────────────────────────────────── */
-/*
- * Retangulo R: ancora (10, 20), w=100, h=50
- * Ocupa a regiao: x em [10, 110], y em [20, 70]
- */
-
-void test_contemPonto_Dentro(void)
-{
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoRetangulo(R, 50.0, 40.0),
-        "Ponto (50, 40) deve estar dentro.");
-}
-
-void test_contemPonto_NasBordas(void)
-{
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoRetangulo(R, 10.0, 20.0),
-        "Canto inferior esquerdo deve estar dentro.");
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoRetangulo(R, 110.0, 70.0),
-        "Canto superior direito deve estar dentro.");
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoRetangulo(R, 10.0, 70.0),
-        "Canto superior esquerdo deve estar dentro.");
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoRetangulo(R, 110.0, 20.0),
-        "Canto inferior direito deve estar dentro.");
-}
-
-void test_contemPonto_Fora(void)
-{
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoRetangulo(R, 5.0, 40.0),
-        "Ponto a esquerda nao deve estar dentro.");
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoRetangulo(R, 120.0, 40.0),
-        "Ponto a direita nao deve estar dentro.");
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoRetangulo(R, 50.0, 10.0),
-        "Ponto abaixo nao deve estar dentro.");
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoRetangulo(R, 50.0, 80.0),
-        "Ponto acima nao deve estar dentro.");
-}
-
-void test_contemPonto_RetanguloNulo(void)
-{
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoRetangulo(NULL, 50.0, 40.0),
-        "NULL deve retornar false.");
-}
-
-/* ─────────────────────────────────────────────
-   dentroRegiaoRetangulo
-   ───────────────────────────────────────────── */
-/*
- * Retangulo R: ancora (10, 20), w=100, h=50
- * Ocupa a regiao: x em [10, 110], y em [20, 70]
- */
-
-void test_dentroRegiao_TotalmenteContido(void)
-{
-    // Regiao maior que o retangulo
-    TEST_ASSERT_TRUE_MESSAGE(dentroRegiaoRetangulo(R, 0.0, 0.0, 200.0, 200.0),
-        "Retangulo deve estar dentro de uma regiao maior.");
-}
-
-void test_dentroRegiao_ExatamenteIgual(void)
-{
-    // Regiao com exatamente as mesmas dimensoes e posicao
-    TEST_ASSERT_TRUE_MESSAGE(dentroRegiaoRetangulo(R, 10.0, 20.0, 100.0, 50.0),
-        "Retangulo deve estar dentro de uma regiao identica.");
-}
-
-void test_dentroRegiao_Fora(void)
-{
-    // Regiao menor — retangulo nao cabe inteiramente
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoRetangulo(R, 15.0, 20.0, 100.0, 50.0),
-        "Retangulo nao deve caber em regiao que corta a esquerda.");
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoRetangulo(R, 10.0, 25.0, 100.0, 50.0),
-        "Retangulo nao deve caber em regiao que corta abaixo.");
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoRetangulo(R, 10.0, 20.0, 90.0, 50.0),
-        "Retangulo nao deve caber em regiao que corta a direita.");
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoRetangulo(R, 10.0, 20.0, 100.0, 40.0),
-        "Retangulo nao deve caber em regiao que corta acima.");
-}
-
-void test_dentroRegiao_RetanguloNulo(void)
-{
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoRetangulo(NULL, 0.0, 0.0, 200.0, 200.0),
-        "NULL deve retornar false.");
-}
-
-void test_dentroRegiao_RegiaoZero(void)
-{
-    // Regiao com largura zero
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoRetangulo(R, 10.0, 20.0, 0.0, 50.0),
-        "Retangulo nao deve caber em regiao com w=0.");
-    // Regiao com altura zero
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoRetangulo(R, 10.0, 20.0, 100.0, 0.0),
-        "Retangulo nao deve caber em regiao com h=0.");
-}
-
-/* ─────────────────────────────────────────────
-   main
-   ───────────────────────────────────────────── */
+/* -------------------------------------------------------------------------- */
+/*  Runner                                                                    */
+/* -------------------------------------------------------------------------- */
 
 int main(void)
 {
     UNITY_BEGIN();
 
-    RUN_TEST(test_criaRetangulo_Valido);
-    RUN_TEST(test_criaRetangulo_Nulo_CorNula);
-    RUN_TEST(test_criaRetangulo_DimensaoInvalida);
-    RUN_TEST(test_criaRetangulo_IdInvalido);
+    RUN_TEST(test_criar_nao_retorna_nulo);
+    RUN_TEST(test_getters_basicos);
+    RUN_TEST(test_getters_de_cor);
+    RUN_TEST(test_cores_sao_copiadas_na_criacao);
 
-    RUN_TEST(test_Getters_RetanguloNulo);
+    RUN_TEST(test_area);
 
-    RUN_TEST(test_translada_DeslocamentoPositivo);
-    RUN_TEST(test_translada_DeslocamentoNegativo);
-    RUN_TEST(test_translada_DeslocamentoZero);
-    RUN_TEST(test_translada_NaoAlteraDimensoes);
-    RUN_TEST(test_translada_RetanguloNulo);
+    RUN_TEST(test_mover_desloca_a_ancora);
+    RUN_TEST(test_mover_nao_altera_dimensoes);
+    RUN_TEST(test_set_cores_atualiza);
+    RUN_TEST(test_set_cores_copia_os_argumentos);
 
-    RUN_TEST(test_setCores_Valido);
-    RUN_TEST(test_setCores_MesmaCor);
-    RUN_TEST(test_setCores_UmaCorNula);
-   
+    RUN_TEST(test_clone_copia_atributos_com_novo_id);
+    RUN_TEST(test_clone_eh_independente);
 
-    RUN_TEST(test_StringsDuplicadas);
-
-    RUN_TEST(test_contemPonto_Dentro);
-    RUN_TEST(test_contemPonto_NasBordas);
-    RUN_TEST(test_contemPonto_Fora);
-    RUN_TEST(test_contemPonto_RetanguloNulo);
-
-    RUN_TEST(test_dentroRegiao_TotalmenteContido);
-    RUN_TEST(test_dentroRegiao_ExatamenteIgual);
-    RUN_TEST(test_dentroRegiao_Fora);
-    RUN_TEST(test_dentroRegiao_RegiaoZero);
-    RUN_TEST(test_dentroRegiao_RetanguloNulo);
+    RUN_TEST(test_destruir_nulo_eh_seguro);
 
     return UNITY_END();
 }

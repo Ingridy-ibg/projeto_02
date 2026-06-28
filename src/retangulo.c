@@ -1,45 +1,51 @@
+/**
+ * @file retangulo.c
+ * @brief Implementação do TAD Retangulo (contrato em retangulo.h).
+ */
+
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
+
 #include "retangulo.h"
 
-typedef struct RetanguloStruct {
+/* Definição concreta do tipo. Fica no .c (proibido struct no .h). */
+struct retangulo {
     int    id;
-    double x;
-    double y;
-    double w;
-    double h;
-    char  *corb;
-    char  *corp;
-} RetanguloStruct;
+    double x;     /* x do canto inferior esquerdo (âncora) */
+    double y;     /* y do canto inferior esquerdo (âncora) */
+    double w;     /* largura */
+    double h;     /* altura  */
+    char  *corb;  /* cor da borda (string própria) */
+    char  *corp;  /* cor de preenchimento (string própria) */
+};
 
-static char *dupString(const char *s) {
-    if (s == NULL) return NULL;
-    size_t len = strlen(s) + 1;
-    char *copy = (char *)malloc(len);
-    if (copy == NULL) return NULL;
-    memcpy(copy, s, len);
-    return copy;
+/* Duplica uma string em memória própria. Substitui strdup() para não depender
+   de macros POSIX sob -std=c99. Retorna NULL se s for NULL ou em falha. */
+static char *dup_str(const char *s)
+{
+    size_t n;
+    char  *novo;
+
+    if (s == NULL) {
+        return NULL;
+    }
+    n = strlen(s) + 1;
+    novo = malloc(n);
+    if (novo != NULL) {
+        memcpy(novo, s, n);
+    }
+    return novo;
 }
 
-static bool parametrosValidos(int id, double w, double h,
-                             const char *corb, const char *corp) {
-    return id > 0 && w > 0.0 && h > 0.0 && corb != NULL && corp != NULL;
-}
+/* -------------------------------------------------------------------------- */
+/*  Criação / clonagem / destruição                                           */
+/* -------------------------------------------------------------------------- */
 
-Retangulo criaRetangulo(int id, double x, double y, double w, double h,
-                        const char *corb, const char *corp) {
-    if (!parametrosValidos(id, w, h, corb, corp)) return NULL;
-
-    RetanguloStruct *r = (RetanguloStruct *)malloc(sizeof(RetanguloStruct));
-    if (r == NULL) return NULL;
-
-    r->corb = dupString(corb);
-    r->corp = dupString(corp);
-    if (r->corb == NULL || r->corp == NULL) {
-        free(r->corb);
-        free(r->corp);
-        free(r);
+Retangulo retangulo_criar(int id, double x, double y, double w, double h,
+                          const char *corb, const char *corp)
+{
+    Retangulo r = malloc(sizeof(struct retangulo));
+    if (r == NULL) {
         return NULL;
     }
 
@@ -48,90 +54,111 @@ Retangulo criaRetangulo(int id, double x, double y, double w, double h,
     r->y  = y;
     r->w  = w;
     r->h  = h;
-    return (Retangulo)r;
+    r->corb = dup_str(corb);
+    r->corp = dup_str(corp);
+
+    /* Se qualquer cópia de cor falhou, desfaz tudo para não vazar memória. */
+    if (r->corb == NULL || r->corp == NULL) {
+        free(r->corb);
+        free(r->corp);
+        free(r);
+        return NULL;
+    }
+    return r;
 }
 
-void destroiRetangulo(Retangulo r) {
-    if (r == NULL) return;
-    RetanguloStruct *rs = (RetanguloStruct *)r;
-    free(rs->corb);
-    free(rs->corp);
-    free(rs);
+Retangulo retangulo_clonar(Retangulo r, int novo_id)
+{
+    if (r == NULL) {
+        return NULL;
+    }
+    return retangulo_criar(novo_id, r->x, r->y, r->w, r->h, r->corb, r->corp);
 }
 
-int getIdRetangulo(Retangulo r) {
-    if (r == NULL) return -1;
-    return ((RetanguloStruct *)r)->id;
+void retangulo_destruir(Retangulo r)
+{
+    if (r == NULL) {
+        return;
+    }
+    free(r->corb);
+    free(r->corp);
+    free(r);
 }
 
-double getXRetangulo(Retangulo r) {
-    if (r == NULL) return 0.0;
-    return ((RetanguloStruct *)r)->x;
+/* -------------------------------------------------------------------------- */
+/*  Consultas (getters)                                                       */
+/* -------------------------------------------------------------------------- */
+
+int retangulo_get_id(Retangulo r)
+{
+    return r->id;
 }
 
-double getYRetangulo(Retangulo r) {
-    if (r == NULL) return 0.0;
-    return ((RetanguloStruct *)r)->y;
+double retangulo_get_x(Retangulo r)
+{
+    return r->x;
 }
 
-double getWRetangulo(Retangulo r) {
-    if (r == NULL) return 0.0;
-    return ((RetanguloStruct *)r)->w;
+double retangulo_get_y(Retangulo r)
+{
+    return r->y;
 }
 
-double getHRetangulo(Retangulo r) {
-    if (r == NULL) return 0.0;
-    return ((RetanguloStruct *)r)->h;
+double retangulo_get_largura(Retangulo r)
+{
+    return r->w;
 }
 
-const char *getCorbRetangulo(Retangulo r) {
-    if (r == NULL) return NULL;
-    return ((RetanguloStruct *)r)->corb;
+double retangulo_get_altura(Retangulo r)
+{
+    return r->h;
 }
 
-const char *getCorpRetangulo(Retangulo r) {
-    if (r == NULL) return NULL;
-    return ((RetanguloStruct *)r)->corp;
+const char *retangulo_get_cor_borda(Retangulo r)
+{
+    return r->corb;
 }
 
-void transladaRetangulo(Retangulo r, double dx, double dy) {
-    if (r == NULL) return;
-    RetanguloStruct *rs = (RetanguloStruct *)r;
-    rs->x += dx;
-    rs->y += dy;
+const char *retangulo_get_cor_preenchimento(Retangulo r)
+{
+    return r->corp;
 }
 
-void setCoresRetangulo(Retangulo r, const char *corb, const char *corp) {
-    if (r == NULL || corb == NULL || corp == NULL) return;
+/* -------------------------------------------------------------------------- */
+/*  Atributos derivados                                                       */
+/* -------------------------------------------------------------------------- */
 
-    RetanguloStruct *rs = (RetanguloStruct *)r;
-    char *novaCorb = dupString(corb);
-    char *novaCorp = dupString(corp);
-    if (novaCorb == NULL || novaCorp == NULL) {
-        free(novaCorb);
-        free(novaCorp);
+double retangulo_area(Retangulo r)
+{
+    return r->w * r->h;
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Modificações                                                              */
+/* -------------------------------------------------------------------------- */
+
+void retangulo_mover(Retangulo r, double dx, double dy)
+{
+    r->x += dx;
+    r->y += dy;
+}
+
+void retangulo_set_cores(Retangulo r, const char *corb, const char *corp)
+{
+    char *nova_borda   = dup_str(corb);
+    char *nova_preench = dup_str(corp);
+
+    /* Só troca se ambas as cópias deram certo; caso contrário, mantém o
+       estado anterior intacto e não vaza as novas alocações. */
+    if (nova_borda == NULL || nova_preench == NULL) {
+        free(nova_borda);
+        free(nova_preench);
         return;
     }
 
-    free(rs->corb);
-    free(rs->corp);
-    rs->corb = novaCorb;
-    rs->corp = novaCorp;
-}
+    free(r->corb);
+    r->corb = nova_borda;
 
-bool contemPontoRetangulo(Retangulo r, double px, double py) {
-    if (r == NULL) return false;
-    RetanguloStruct *rs = (RetanguloStruct *)r;
-    return px >= rs->x && px <= rs->x + rs->w &&
-           py >= rs->y && py <= rs->y + rs->h;
-}
-
-bool dentroRegiaoRetangulo(Retangulo r, double rx, double ry,
-                           double rw, double rh) {
-    if (r == NULL) return false;
-    RetanguloStruct *rs = (RetanguloStruct *)r;
-
-    return rs->x >= rx && rs->y >= ry &&
-           rs->x + rs->w <= rx + rw &&
-           rs->y + rs->h <= ry + rh;
+    free(r->corp);
+    r->corp = nova_preench;
 }

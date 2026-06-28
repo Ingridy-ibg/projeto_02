@@ -1,122 +1,164 @@
 #ifndef RETANGULO_H
 #define RETANGULO_H
 
-#include <stdbool.h>
+/**
+ * @file retangulo.h
+ * @brief TAD Retângulo.
+ *
+ * Representa um retângulo do plano cartesiano, conforme o comando .geo:
+ *
+ *     r i x y w h corb corp
+ *
+ * onde:
+ *   - i        : identificador inteiro (>= 1) da forma;
+ *   - (x, y)   : coordenada âncora, que é o CANTO INFERIOR ESQUERDO;
+ *   - w        : largura (> 0);
+ *   - h        : altura (> 0);
+ *   - corb     : cor da borda    (string no padrão de cores SVG);
+ *   - corp     : cor de preenchimento (string no padrão de cores SVG).
+ *
+ * Atributos de ordenação:
+ *   - largura : w;
+ *   - altura  : h;
+ *   - área    : w * h.
+ *
+ * Este é um TAD OPACO: a struct é definida apenas em retangulo.c.
+ *
+ * Propriedade (ownership):
+ *   - as strings de cor passadas são COPIADAS internamente; o chamador
+ *     continua dono dos buffers originais;
+ *   - as strings devolvidas pelos getters pertencem ao retângulo; não liberar
+ *     nem modificar;
+ *   - todo Retangulo criado deve ser liberado com retangulo_destruir().
+ */
 
 /**
- * @typedef Retangulo
- * @brief Ponteiro opaco para a estrutura interna do retângulo.
+ * @brief Ponteiro opaco para um retângulo.
+ *
+ * A struct subjacente é definida apenas em retangulo.c (contrato: nenhuma
+ * struct é definida neste cabeçalho).
  */
-typedef void *Retangulo;
+typedef struct retangulo *Retangulo;
 
 /**
- * @brief Cria um novo retângulo com os parâmetros fornecidos.
- * @param id   Identificador inteiro único do retângulo.
- * @param x    Coordenada x do canto inferior esquerdo (âncora).
- * @param y    Coordenada y do canto inferior esquerdo (âncora).
- * @param w    Largura do retângulo (> 0).
- * @param h    Altura do retângulo (> 0).
- * @param corb String com a cor da borda (padrão SVG).
- * @param corp String com a cor do preenchimento (padrão SVG).
- * @return Ponteiro (Retangulo) para a estrutura alocada.
- * Retorna NULL em caso de falha de alocação ou parâmetros inválidos.
+ * @brief Cria um retângulo.
+ *
+ * @param id    Identificador inteiro da forma (>= 1).
+ * @param x     x do canto inferior esquerdo (âncora).
+ * @param y     y do canto inferior esquerdo (âncora).
+ * @param w     Largura (deve ser > 0).
+ * @param h     Altura (deve ser > 0).
+ * @param corb  Cor da borda (string não nula, padrão SVG). É copiada.
+ * @param corp  Cor de preenchimento (string não nula, padrão SVG). É copiada.
+ *
+ * @return Novo Retangulo alocado dinamicamente, ou NULL em falha de alocação.
+ *         O chamador deve liberá-lo com retangulo_destruir().
+ *
+ * @pre w > 0; h > 0; corb != NULL; corp != NULL.
  */
-Retangulo criaRetangulo(int id, double x, double y, double w, double h,
-                        const char *corb, const char *corp);
+Retangulo retangulo_criar(int id, double x, double y, double w, double h,
+                          const char *corb, const char *corp);
 
 /**
- * @brief Libera a memória alocada pelo retângulo.
- * @param r Ponteiro para o retângulo a ser destruído.
+ * @brief Cria uma cópia independente de um retângulo, com novo identificador.
+ *
+ * Útil para o comando de clonagem (cm). A cópia possui suas próprias strings
+ * de cor; alterações em uma não afetam a outra.
+ *
+ * @param r        Retângulo a clonar (não nulo).
+ * @param novo_id  Identificador do clone (>= 1).
+ * @return Novo Retangulo idêntico a @p r (exceto pelo id), ou NULL em falha.
+ * @pre r != NULL.
  */
-void destroiRetangulo(Retangulo r);
+Retangulo retangulo_clonar(Retangulo r, int novo_id);
 
 /**
- * @brief Retorna o identificador do retângulo.
- * @param r Ponteiro para o retângulo.
- * @return Identificador inteiro. Retorna -1 se r for NULL.
+ * @brief Libera toda a memória associada a um retângulo.
+ *
+ * Após a chamada, @p r não deve mais ser usado. Chamar com NULL é seguro.
+ *
+ * @param r Retângulo a destruir (pode ser NULL).
  */
-int getIdRetangulo(Retangulo r);
+void retangulo_destruir(Retangulo r);
+
+/* -------------------------------------------------------------------------- */
+/*  Consultas (getters)                                                       */
+/* -------------------------------------------------------------------------- */
+
+/** @brief Identificador do retângulo. @pre r != NULL. */
+int retangulo_get_id(Retangulo r);
+
+/** @brief x do canto inferior esquerdo (âncora). @pre r != NULL. */
+double retangulo_get_x(Retangulo r);
+
+/** @brief y do canto inferior esquerdo (âncora). @pre r != NULL. */
+double retangulo_get_y(Retangulo r);
 
 /**
- * @brief Retorna a coordenada x da âncora (canto inferior esquerdo).
- * @param r Ponteiro para o retângulo.
- * @return Valor de x. Retorna 0.0 se r for NULL.
+ * @brief Largura (w). Também é o atributo do critério de ordenação por largura.
+ * @pre r != NULL.
  */
-double getXRetangulo(Retangulo r);
+double retangulo_get_largura(Retangulo r);
 
 /**
- * @brief Retorna a coordenada y da âncora (canto inferior esquerdo).
- * @param r Ponteiro para o retângulo.
- * @return Valor de y. Retorna 0.0 se r for NULL.
+ * @brief Altura (h). Também é o atributo do critério de ordenação por altura.
+ * @pre r != NULL.
  */
-double getYRetangulo(Retangulo r);
+double retangulo_get_altura(Retangulo r);
 
 /**
- * @brief Retorna a largura do retângulo.
- * @param r Ponteiro para o retângulo.
- * @return Largura (w). Retorna 0.0 se r for NULL.
+ * @brief Retorna a cor da borda.
+ *
+ * A string retornada pertence ao retângulo; não liberar nem modificar.
+ * @pre r != NULL.
  */
-double getWRetangulo(Retangulo r);
+const char *retangulo_get_cor_borda(Retangulo r);
 
 /**
- * @brief Retorna a altura do retângulo.
- * @param r Ponteiro para o retângulo.
- * @return Altura (h). Retorna 0.0 se r for NULL.
+ * @brief Retorna a cor de preenchimento.
+ *
+ * A string retornada pertence ao retângulo; não liberar nem modificar.
+ * @pre r != NULL.
  */
-double getHRetangulo(Retangulo r);
+const char *retangulo_get_cor_preenchimento(Retangulo r);
+
+/* -------------------------------------------------------------------------- */
+/*  Atributos derivados                                                       */
+/* -------------------------------------------------------------------------- */
 
 /**
- * @brief Retorna a cor da borda do retângulo.
- * @param r Ponteiro para o retângulo.
- * @return String com a cor da borda. Retorna NULL se r for NULL.
+ * @brief Área do retângulo: w * h.
+ * @param r Retângulo (não nulo).
+ * @pre r != NULL.
  */
-const char *getCorbRetangulo(Retangulo r);
+double retangulo_area(Retangulo r);
+
+/* -------------------------------------------------------------------------- */
+/*  Modificações                                                              */
+/* -------------------------------------------------------------------------- */
 
 /**
- * @brief Retorna a cor do preenchimento do retângulo.
- * @param r Ponteiro para o retângulo.
- * @return String com a cor do preenchimento. Retorna NULL se r for NULL.
+ * @brief Desloca o canto âncora do retângulo por (dx, dy).
+ *
+ * Usado na clonagem com movimento (cm) e no reposicionamento de find/findrm.
+ *
+ * @param r   Retângulo (não nulo).
+ * @param dx  Deslocamento no eixo x.
+ * @param dy  Deslocamento no eixo y.
+ * @pre r != NULL.
  */
-const char *getCorpRetangulo(Retangulo r);
+void retangulo_mover(Retangulo r, double dx, double dy);
 
 /**
- * @brief Translada o retângulo somando dx e dy à sua âncora.
- * @param r  Ponteiro para o retângulo.
- * @param dx Deslocamento em x.
- * @param dy Deslocamento em y.
+ * @brief Altera as cores do retângulo (comando mc).
+ *
+ * As novas strings são copiadas; as cores anteriores são liberadas.
+ *
+ * @param r     Retângulo (não nulo).
+ * @param corb  Nova cor da borda (não nula). É copiada.
+ * @param corp  Nova cor de preenchimento (não nula). É copiada.
+ * @pre r != NULL; corb != NULL; corp != NULL.
  */
-void transladaRetangulo(Retangulo r, double dx, double dy);
+void retangulo_set_cores(Retangulo r, const char *corb, const char *corp);
 
-/**
- * @brief Altera as cores do retângulo.
- * @param r    Ponteiro para o retângulo.
- * @param corb Nova cor da borda (padrão SVG).
- * @param corp Nova cor do preenchimento (padrão SVG).
- */
-void setCoresRetangulo(Retangulo r, const char *corb, const char *corp);
-
-/**
- * @brief Verifica se o ponto (px, py) está dentro do retângulo.
- * Considera os limites inclusive (ponto na borda conta como dentro).
- * @param r  Ponteiro para o retângulo.
- * @param px Coordenada x do ponto.
- * @param py Coordenada y do ponto.
- * @return true se o ponto está dentro, false caso contrário ou se r for NULL.
- */
-bool contemPontoRetangulo(Retangulo r, double px, double py);
-
-/**
- * @brief Verifica se o retângulo está inteiramente contido
- * na região definida por (rx, ry, rw, rh).
- * @param r  Ponteiro para o retângulo.
- * @param rx Coordenada x do canto inferior esquerdo da região.
- * @param ry Coordenada y do canto inferior esquerdo da região.
- * @param rw Largura da região.
- * @param rh Altura da região.
- * @return true se o retângulo estiver inteiramente dentro da região.
- * false caso contrário ou se r for NULL.
- */
-bool dentroRegiaoRetangulo(Retangulo r, double rx, double ry,
-                           double rw, double rh);
-
-#endif // RETANGULO_H
+#endif /* RETANGULO_H */
