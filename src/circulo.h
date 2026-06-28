@@ -1,114 +1,201 @@
 #ifndef CIRCULO_H
 #define CIRCULO_H
 
-#include <stdbool.h>
+/**
+ * @file circulo.h
+ * @brief TAD Círculo.
+ *
+ * Representa um círculo do plano cartesiano, conforme o comando .geo:
+ *
+ *     c i x y r corb corp
+ *
+ * onde:
+ *   - i        : identificador inteiro (>= 1) da forma;
+ *   - (x, y)   : coordenada âncora do círculo, que é o seu CENTRO;
+ *   - r        : raio (> 0);
+ *   - corb     : cor da borda    (string no padrão de cores SVG);
+ *   - corp     : cor de preenchimento (string no padrão de cores SVG).
+ *
+ * Este é um Tipo Abstrato de Dados (TAD) OPACO: a definição da struct fica
+ * no arquivo de implementação (circulo.c). O usuário do módulo manipula
+ * apenas o ponteiro Circulo e nunca acessa os campos diretamente.
+ *
+ * Convenção de propriedade (ownership):
+ *   - as strings de cor passadas em circulo_criar() são COPIADAS internamente;
+ *     o chamador continua dono dos buffers que passou;
+ *   - as strings devolvidas pelos getters de cor pertencem ao próprio círculo
+ *     e são válidas enquanto o círculo existir; NÃO devem ser liberadas nem
+ *     modificadas pelo chamador;
+ *   - todo Circulo criado deve ser liberado com circulo_destruir().
+ */
 
 /**
- * @typedef Circulo
- * @brief Ponteiro opaco para a estrutura interna do círculo.
+ * @brief Ponteiro opaco para um círculo.
+ *
+ * A struct subjacente é definida apenas em circulo.c (contrato: nenhuma
+ * struct é definida neste cabeçalho).
  */
-typedef void *Circulo;
+typedef struct circulo *Circulo;
 
 /**
- * @brief Cria um novo círculo com os parâmetros fornecidos.
- * @param id   Identificador inteiro único do círculo.
- * @param x    Coordenada x do centro do círculo.
- * @param y    Coordenada y do centro do círculo.
- * @param r    Raio do círculo (> 0).
- * @param corb String com a cor da borda (padrão SVG).
- * @param corp String com a cor do preenchimento (padrão SVG).
- * @return Ponteiro (Circulo) para a estrutura alocada.
- * Retorna NULL em caso de falha de alocação ou parâmetros inválidos.
+ * @brief Cria um círculo.
+ *
+ * @param id    Identificador inteiro da forma (>= 1).
+ * @param x     Coordenada x do centro.
+ * @param y     Coordenada y do centro.
+ * @param r     Raio do círculo (deve ser > 0).
+ * @param corb  Cor da borda (string não nula, padrão SVG). É copiada.
+ * @param corp  Cor de preenchimento (string não nula, padrão SVG). É copiada.
+ *
+ * @return Novo Circulo alocado dinamicamente, ou NULL em caso de falha de
+ *         alocação. O chamador é responsável por liberá-lo com
+ *         circulo_destruir().
+ *
+ * @pre  r > 0; corb != NULL; corp != NULL.
  */
-Circulo criaCirculo(int id, double x, double y, double r,
-                    const char *corb, const char *corp);
+Circulo circulo_criar(int id, double x, double y, double r,
+                      const char *corb, const char *corp);
 
 /**
- * @brief Libera a memória alocada pelo círculo.
- * @param c Ponteiro para o círculo a ser destruído.
+ * @brief Cria uma cópia independente de um círculo, com um novo identificador.
+ *
+ * Útil para o comando de clonagem (cm). A cópia possui suas próprias strings
+ * de cor; alterações em uma não afetam a outra.
+ *
+ * @param c        Círculo a ser clonado (não nulo).
+ * @param novo_id  Identificador a ser atribuído ao clone (>= 1).
+ *
+ * @return Novo Circulo idêntico a @p c (exceto pelo id), ou NULL em falha.
+ *
+ * @pre c != NULL.
  */
-void destroiCirculo(Circulo c);
+Circulo circulo_clonar(Circulo c, int novo_id);
+
+/**
+ * @brief Libera toda a memória associada a um círculo.
+ *
+ * Após a chamada, o ponteiro @p c não deve mais ser usado. Chamar com NULL
+ * é seguro (no-op).
+ *
+ * @param c Círculo a ser destruído (pode ser NULL).
+ */
+void circulo_destruir(Circulo c);
+
+/* -------------------------------------------------------------------------- */
+/*  Consultas (getters)                                                       */
+/* -------------------------------------------------------------------------- */
 
 /**
  * @brief Retorna o identificador do círculo.
- * @param c Ponteiro para o círculo.
- * @return Identificador inteiro. Retorna -1 se c for NULL.
+ * @param c Círculo (não nulo).
+ * @return Identificador inteiro.
+ * @pre c != NULL.
  */
-int getIdCirculo(Circulo c);
+int circulo_get_id(Circulo c);
 
 /**
- * @brief Retorna a coordenada x do centro do círculo.
- * @param c Ponteiro para o círculo.
- * @return Valor de x. Retorna 0.0 se c for NULL.
+ * @brief Retorna a coordenada x do centro (âncora).
+ * @param c Círculo (não nulo).
+ * @pre c != NULL.
  */
-double getXCirculo(Circulo c);
+double circulo_get_x(Circulo c);
 
 /**
- * @brief Retorna a coordenada y do centro do círculo.
- * @param c Ponteiro para o círculo.
- * @return Valor de y. Retorna 0.0 se c for NULL.
+ * @brief Retorna a coordenada y do centro (âncora).
+ * @param c Círculo (não nulo).
+ * @pre c != NULL.
  */
-double getYCirculo(Circulo c);
+double circulo_get_y(Circulo c);
 
 /**
  * @brief Retorna o raio do círculo.
- * @param c Ponteiro para o círculo.
- * @return Raio (r). Retorna 0.0 se c for NULL.
+ * @param c Círculo (não nulo).
+ * @pre c != NULL.
  */
-double getRCirculo(Circulo c);
+double circulo_get_raio(Circulo c);
 
 /**
- * @brief Retorna a cor da borda do círculo.
- * @param c Ponteiro para o círculo.
- * @return String com a cor da borda. Retorna NULL se c for NULL.
+ * @brief Retorna a cor da borda.
+ *
+ * A string retornada pertence ao círculo; não liberar nem modificar.
+ *
+ * @param c Círculo (não nulo).
+ * @return Ponteiro para a string da cor da borda.
+ * @pre c != NULL.
  */
-const char *getCorbCirculo(Circulo c);
+const char *circulo_get_cor_borda(Circulo c);
 
 /**
- * @brief Retorna a cor do preenchimento do círculo.
- * @param c Ponteiro para o círculo.
- * @return String com a cor do preenchimento. Retorna NULL se c for NULL.
+ * @brief Retorna a cor de preenchimento.
+ *
+ * A string retornada pertence ao círculo; não liberar nem modificar.
+ *
+ * @param c Círculo (não nulo).
+ * @return Ponteiro para a string da cor de preenchimento.
+ * @pre c != NULL.
  */
-const char *getCorpCirculo(Circulo c);
+const char *circulo_get_cor_preenchimento(Circulo c);
+
+/* -------------------------------------------------------------------------- */
+/*  Atributos derivados (para os critérios de ordenação)                      */
+/* -------------------------------------------------------------------------- */
 
 /**
- * @brief Translada o círculo somando dx e dy ao seu centro.
- * @param c  Ponteiro para o círculo.
- * @param dx Deslocamento em x.
- * @param dy Deslocamento em y.
+ * @brief Área do círculo: pi * r^2.
+ * @param c Círculo (não nulo).
+ * @pre c != NULL.
  */
-void transladaCirculo(Circulo c, double dx, double dy);
+double circulo_area(Circulo c);
 
 /**
- * @brief Altera as cores do círculo.
- * @param c    Ponteiro para o círculo.
- * @param corb Nova cor da borda (padrão SVG).
- * @param corp Nova cor do preenchimento (padrão SVG).
+ * @brief Largura do círculo, definida como o diâmetro (2 * r).
+ *
+ * Corresponde à largura da caixa delimitadora (bounding box), usada pelo
+ * critério de ordenação por largura (w).
+ *
+ * @param c Círculo (não nulo).
+ * @pre c != NULL.
  */
-void setCoresCirculo(Circulo c, const char *corb, const char *corp);
+double circulo_largura(Circulo c);
 
 /**
- * @brief Verifica se o ponto (px, py) está dentro do círculo.
- * Considera os limites inclusive (ponto na borda conta como dentro).
- * @param c  Ponteiro para o círculo.
- * @param px Coordenada x do ponto.
- * @param py Coordenada y do ponto.
- * @return true se o ponto está dentro, false caso contrário ou se c for NULL.
+ * @brief Altura do círculo, definida como o diâmetro (2 * r).
+ *
+ * Corresponde à altura da caixa delimitadora (bounding box), usada pelo
+ * critério de ordenação por altura (h).
+ *
+ * @param c Círculo (não nulo).
+ * @pre c != NULL.
  */
-bool contemPontoCirculo(Circulo c, double px, double py);
+double circulo_altura(Circulo c);
+
+/* -------------------------------------------------------------------------- */
+/*  Modificações (setters)                                                    */
+/* -------------------------------------------------------------------------- */
 
 /**
- * @brief Verifica se o círculo está inteiramente contido
- * na região definida por (rx, ry, rw, rh).
- * @param c  Ponteiro para o círculo.
- * @param rx Coordenada x do canto inferior esquerdo da região.
- * @param ry Coordenada y do canto inferior esquerdo da região.
- * @param rw Largura da região.
- * @param rh Altura da região.
- * @return true se o círculo estiver inteiramente dentro da região.
- * false caso contrário ou se c for NULL.
+ * @brief Desloca o centro do círculo por (dx, dy).
+ *
+ * Usado, por exemplo, na clonagem com movimento (comando cm).
+ *
+ * @param c   Círculo (não nulo).
+ * @param dx  Deslocamento no eixo x.
+ * @param dy  Deslocamento no eixo y.
+ * @pre c != NULL.
  */
-bool dentroRegiaoCirculo(Circulo c, double rx, double ry,
-                         double rw, double rh);
+void circulo_mover(Circulo c, double dx, double dy);
 
-#endif // CIRCULO_H
+/**
+ * @brief Altera as cores do círculo (comando mc).
+ *
+ * As novas strings são copiadas internamente; o chamador continua dono dos
+ * buffers passados. As cores anteriores são liberadas.
+ *
+ * @param c     Círculo (não nulo).
+ * @param corb  Nova cor da borda (não nula). É copiada.
+ * @param corp  Nova cor de preenchimento (não nula). É copiada.
+ * @pre c != NULL; corb != NULL; corp != NULL.
+ */
+void circulo_set_cores(Circulo c, const char *corb, const char *corp);
+
+#endif /* CIRCULO_H */

@@ -1,6 +1,6 @@
 PROJ_NAME = ted
 ALUNO     = IngridyGimenes
-LIBS      =
+LIBS      = -lm
 
 OBJETOS = 
 
@@ -29,6 +29,10 @@ src/circulo.o: src/circulo.c src/circulo.h
 
 test/t_circulo.o: test/t_circulo.c src/circulo.h Unity/src/unity.h
 
+src/linha.o: src/linha.c src/linha.h
+
+test/t_linha.o: test/t_linha.c src/linha.h Unity/src/unity.h
+
 
 
 
@@ -38,16 +42,21 @@ test/t_circulo.o: test/t_circulo.c src/circulo.h Unity/src/unity.h
 
 t_retangulo: test/t_retangulo.o src/retangulo.o Unity/src/unity.o
 	$(CC) $(LDFLAGS) test/t_retangulo.o src/retangulo.o Unity/src/unity.o \
-		-o test/t_retangulo
+		-o test/t_retangulo $(LIBS)
 	./test/t_retangulo
 
 t_circulo: test/t_circulo.o src/circulo.o Unity/src/unity.o
 	$(CC) $(LDFLAGS) test/t_circulo.o src/circulo.o Unity/src/unity.o \
-		-o test/t_circulo
+		-o test/t_circulo $(LIBS)
 	./test/t_circulo	
 
+t_linha: test/t_linha.o src/linha.o Unity/src/unity.o
+	$(CC) $(LDFLAGS) test/t_linha.o src/linha.o Unity/src/unity.o \
+		-o test/t_linha $(LIBS)
+	./test/t_linha
 
-tstall: t_retangulo t_circulo
+
+tstall: t_retangulo t_circulo t_linha
 
 
 # ─── Utilitários ─────────────────────────────────────────────────
@@ -59,6 +68,9 @@ clean:
 		  test/t_circulo.o \
 		  test/t_circulo\
 		  src/circulo.o\
+		  src/linha.o\
+		test\t_linha.o\
+		test\t_linha\
 		  src/$(PROJ_NAME)
 
 run: $(PROJ_NAME)

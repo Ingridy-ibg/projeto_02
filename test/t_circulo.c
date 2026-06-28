@@ -1,293 +1,210 @@
+/**
+ * @file t_circulo.c
+ * @brief Testes unitários do TAD Circulo (framework Unity).
+ *
+ * Compilação (exemplo de target no Makefile):
+ *   gcc -std=c99 -fstack-protector-all -Wall -Wextra -g \
+ *       -DUNITY_INCLUDE_DOUBLE \
+ *       t_circulo.c circulo.c unity.c -o t_circulo -lm
+ *
+ * Obs.: a flag -DUNITY_INCLUDE_DOUBLE habilita TEST_ASSERT_DOUBLE_WITHIN.
+ */
+
 #include "unity.h"
 #include "../src/circulo.h"
 
-Circulo C;
+/* Valor de PI com precisão dupla, igual ao M_PI usado na implementação. */
+#define PI_REF 3.14159265358979323846
+/* Tolerância para comparações de ponto flutuante. */
+#define EPS 1e-9
+
+/* Círculo padrão recriado antes de cada teste. */
+static Circulo c;
 
 void setUp(void)
 {
-    C = criaCirculo(1, 10.0, 20.0, 5.0, "black", "blue");
+    c = circulo_criar(1, 10.0, 20.0, 5.0, "black", "red");
 }
 
 void tearDown(void)
 {
-    destroiCirculo(C);
+    circulo_destruir(c);
+    c = NULL;
 }
 
-/* ─────────────────────────────────────────────
-   criaCirculo
-   ───────────────────────────────────────────── */
+/* -------------------------------------------------------------------------- */
+/*  Criação e getters                                                         */
+/* -------------------------------------------------------------------------- */
 
-void test_criaCirculo_Valido(void)
+void test_criar_nao_retorna_nulo(void)
 {
-    TEST_ASSERT_NOT_NULL_MESSAGE(C, "Circulo criado nao deve ser NULL.");
-    TEST_ASSERT_EQUAL_INT_MESSAGE(1,     getIdCirculo(C),   "ID deve ser 1.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(10.0,  getXCirculo(C), "X deve ser 10.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(20.0,  getYCirculo(C), "Y deve ser 20.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(5.0,   getRCirculo(C), "R deve ser 5.0.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("black", getCorbCirculo(C), "Cor da borda deve ser black.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("blue",  getCorpCirculo(C), "Cor do preenchimento deve ser blue.");
+    TEST_ASSERT_NOT_NULL(c);
 }
 
-void test_criaCirculo_Nulo_CorNula(void)
+void test_getters_basicos(void)
 {
-    Circulo c = criaCirculo(2, 0.0, 0.0, 10.0, NULL, NULL);
-    TEST_ASSERT_NULL_MESSAGE(c, "Criar circulo com cores NULL deve retornar NULL.");
+    TEST_ASSERT_EQUAL_INT(1, circulo_get_id(c));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, circulo_get_x(c));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 20.0, circulo_get_y(c));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 5.0, circulo_get_raio(c));
 }
 
-void test_criaCirculo_DimensaoInvalida(void)
+void test_getters_de_cor(void)
 {
-    Circulo c1 = criaCirculo(2, 0.0, 0.0, 0.0, "red", "green");
-    Circulo c2 = criaCirculo(3, 0.0, 0.0, -5.0, "red", "green");
-
-    TEST_ASSERT_NULL_MESSAGE(c1, "r=0 deve retornar NULL.");
-    TEST_ASSERT_NULL_MESSAGE(c2, "r negativo deve retornar NULL.");
+    TEST_ASSERT_EQUAL_STRING("black", circulo_get_cor_borda(c));
+    TEST_ASSERT_EQUAL_STRING("red", circulo_get_cor_preenchimento(c));
 }
 
-void test_criaCirculo_IdInvalido(void)
+/* As cores devem ser COPIADAS internamente: alterar o buffer original
+   depois da criação não pode afetar o círculo. */
+void test_cores_sao_copiadas_na_criacao(void)
 {
-    Circulo c = criaCirculo(0, 0.0, 0.0, 10.0, "red", "green");
-    TEST_ASSERT_NULL_MESSAGE(c, "ID 0 deve retornar NULL.");
+    char borda[] = "blue";
+    char preench[] = "green";
+
+    Circulo cc = circulo_criar(2, 0.0, 0.0, 1.0, borda, preench);
+    TEST_ASSERT_NOT_NULL(cc);
+
+    borda[0] = 'X';     /* corrompe o buffer original */
+    preench[0] = 'Y';
+
+    TEST_ASSERT_EQUAL_STRING("blue", circulo_get_cor_borda(cc));
+    TEST_ASSERT_EQUAL_STRING("green", circulo_get_cor_preenchimento(cc));
+
+    circulo_destruir(cc);
 }
 
-/* ─────────────────────────────────────────────
-   getters com NULL
-   ───────────────────────────────────────────── */
+/* -------------------------------------------------------------------------- */
+/*  Atributos derivados                                                       */
+/* -------------------------------------------------------------------------- */
 
-void test_Getters_CirculoNulo(void)
+void test_area(void)
 {
-    TEST_ASSERT_EQUAL_INT_MESSAGE(-1,   getIdCirculo(NULL),   "getId(NULL) deve retornar -1.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(0.0, getXCirculo(NULL),  "getX(NULL) deve retornar 0.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(0.0, getYCirculo(NULL),  "getY(NULL) deve retornar 0.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(0.0, getRCirculo(NULL),  "getR(NULL) deve retornar 0.0.");
-    TEST_ASSERT_NULL_MESSAGE(getCorbCirculo(NULL), "getCorb(NULL) deve retornar NULL.");
-    TEST_ASSERT_NULL_MESSAGE(getCorpCirculo(NULL), "getCorp(NULL) deve retornar NULL.");
+    /* r = 5  ->  area = pi * 25 */
+    TEST_ASSERT_DOUBLE_WITHIN(1e-6, PI_REF * 25.0, circulo_area(c));
 }
 
-/* ─────────────────────────────────────────────
-   transladaCirculo
-   ───────────────────────────────────────────── */
-
-void test_translada_DeslocamentoPositivo(void)
+void test_largura_eh_diametro(void)
 {
-    transladaCirculo(C, 5.0, 10.0);
-
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(15.0, getXCirculo(C), "X apos translada deve ser 15.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(30.0, getYCirculo(C), "Y apos translada deve ser 30.0.");
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, circulo_largura(c));
 }
 
-void test_translada_DeslocamentoNegativo(void)
+void test_altura_eh_diametro(void)
 {
-    transladaCirculo(C, -5.0, -10.0);
-
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(5.0,  getXCirculo(C), "X apos translada negativa deve ser 5.0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(10.0, getYCirculo(C), "Y apos translada negativa deve ser 10.0.");
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, circulo_altura(c));
 }
 
-void test_translada_DeslocamentoZero(void)
+/* -------------------------------------------------------------------------- */
+/*  Modificações                                                              */
+/* -------------------------------------------------------------------------- */
+
+void test_mover_desloca_o_centro(void)
 {
-    transladaCirculo(C, 0.0, 0.0);
-
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(10.0, getXCirculo(C), "X nao deve mudar com dx=0.");
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(20.0, getYCirculo(C), "Y nao deve mudar com dy=0.");
+    circulo_mover(c, 3.0, -7.5);
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 13.0, circulo_get_x(c));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 12.5, circulo_get_y(c));
 }
 
-void test_translada_NaoAlteraRaio(void)
+void test_mover_nao_altera_raio(void)
 {
-    transladaCirculo(C, 99.0, 99.0);
-
-    TEST_ASSERT_EQUAL_DOUBLE_MESSAGE(5.0, getRCirculo(C), "R nao deve mudar apos translada.");
+    circulo_mover(c, 100.0, 100.0);
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 5.0, circulo_get_raio(c));
 }
 
-void test_translada_CirculoNulo(void)
+void test_set_cores_atualiza(void)
 {
-    // Nao deve crashar
-    transladaCirculo(NULL, 5.0, 5.0);
-    TEST_ASSERT_TRUE(true);
+    circulo_set_cores(c, "yellow", "purple");
+    TEST_ASSERT_EQUAL_STRING("yellow", circulo_get_cor_borda(c));
+    TEST_ASSERT_EQUAL_STRING("purple", circulo_get_cor_preenchimento(c));
 }
 
-/* ─────────────────────────────────────────────
-   setCoresCirculo
-   ───────────────────────────────────────────── */
-
-void test_setCores_Valido(void)
+/* set_cores também deve copiar (e liberar as cores antigas sem corromper). */
+void test_set_cores_copia_os_argumentos(void)
 {
-    setCoresCirculo(C, "red", "yellow");
+    char nova_borda[] = "cyan";
+    char nova_preench[] = "magenta";
 
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("red",    getCorbCirculo(C), "Cor da borda deve ser red.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("yellow", getCorpCirculo(C), "Cor do preenchimento deve ser yellow.");
+    circulo_set_cores(c, nova_borda, nova_preench);
+    nova_borda[0] = 'Z';
+    nova_preench[0] = 'W';
+
+    TEST_ASSERT_EQUAL_STRING("cyan", circulo_get_cor_borda(c));
+    TEST_ASSERT_EQUAL_STRING("magenta", circulo_get_cor_preenchimento(c));
 }
 
-void test_setCores_MesmaCor(void)
+/* -------------------------------------------------------------------------- */
+/*  Clonagem                                                                  */
+/* -------------------------------------------------------------------------- */
+
+void test_clone_copia_atributos_com_novo_id(void)
 {
-    setCoresCirculo(C, "black", "blue");
+    Circulo clone = circulo_clonar(c, 99);
+    TEST_ASSERT_NOT_NULL(clone);
 
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("black", getCorbCirculo(C), "Cor da borda deve permanecer black.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("blue",  getCorpCirculo(C), "Cor do preenchimento deve permanecer blue.");
+    TEST_ASSERT_EQUAL_INT(99, circulo_get_id(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, circulo_get_x(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 20.0, circulo_get_y(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 5.0, circulo_get_raio(clone));
+    TEST_ASSERT_EQUAL_STRING("black", circulo_get_cor_borda(clone));
+    TEST_ASSERT_EQUAL_STRING("red", circulo_get_cor_preenchimento(clone));
+
+    circulo_destruir(clone);
 }
 
-void test_setCores_UmaCorNula(void)
+/* O clone deve ser independente: mexer no original não afeta o clone. */
+void test_clone_eh_independente(void)
 {
-    const char *corbOriginal = getCorbCirculo(C);
-    const char *corpOriginal = getCorpCirculo(C);
+    Circulo clone = circulo_clonar(c, 99);
+    TEST_ASSERT_NOT_NULL(clone);
 
-    setCoresCirculo(C, NULL, "yellow");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(corbOriginal, getCorbCirculo(C), "Cor da borda nao deve mudar se corb=NULL.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(corpOriginal, getCorpCirculo(C), "Cor do preenchimento nao deve mudar se corb=NULL.");
+    circulo_mover(c, 50.0, 50.0);
+    circulo_set_cores(c, "white", "white");
 
-    setCoresCirculo(C, "red", NULL);
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(corbOriginal, getCorbCirculo(C), "Cor da borda nao deve mudar se corp=NULL.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE(corpOriginal, getCorpCirculo(C), "Cor do preenchimento nao deve mudar se corp=NULL.");
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, circulo_get_x(clone));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 20.0, circulo_get_y(clone));
+    TEST_ASSERT_EQUAL_STRING("black", circulo_get_cor_borda(clone));
+    TEST_ASSERT_EQUAL_STRING("red", circulo_get_cor_preenchimento(clone));
+
+    circulo_destruir(clone);
 }
 
-void test_StringsDuplicadas(void)
+/* -------------------------------------------------------------------------- */
+/*  Robustez                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/* circulo_destruir(NULL) deve ser seguro (no-op). */
+void test_destruir_nulo_eh_seguro(void)
 {
-    char corb[] = "red";
-    char corp[] = "blue";
-    Circulo c = criaCirculo(10, 0.0, 0.0, 10.0, corb, corp);
-
-    // Modificar as strings originais
-    corb[0] = 'g'; // "red" -> "ged"
-    corp[0] = 'y'; // "blue" -> "ylue"
-
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("red", getCorbCirculo(c), "Strings devem ser duplicadas, nao compartilhadas.");
-    TEST_ASSERT_EQUAL_STRING_MESSAGE("blue", getCorpCirculo(c), "Strings devem ser duplicadas, nao compartilhadas.");
-
-    destroiCirculo(c);
+    circulo_destruir(NULL);
+    TEST_PASS();
 }
 
-/* ─────────────────────────────────────────────
-   contemPontoCirculo
-   ───────────────────────────────────────────── */
-/*
- * Circulo C: centro (10, 20), r=5
- * Ocupa pontos onde distancia <= 5
- */
-
-void test_contemPonto_Dentro(void)
-{
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoCirculo(C, 10.0, 20.0),
-        "Centro deve estar dentro.");
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoCirculo(C, 12.0, 20.0),
-        "Ponto dentro deve estar dentro.");
-}
-
-void test_contemPonto_NasBordas(void)
-{
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoCirculo(C, 15.0, 20.0),
-        "Ponto na borda direita deve estar dentro.");
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoCirculo(C, 10.0, 25.0),
-        "Ponto na borda superior deve estar dentro.");
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoCirculo(C, 5.0, 20.0),
-        "Ponto na borda esquerda deve estar dentro.");
-    TEST_ASSERT_TRUE_MESSAGE(contemPontoCirculo(C, 10.0, 15.0),
-        "Ponto na borda inferior deve estar dentro.");
-}
-
-void test_contemPonto_Fora(void)
-{
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoCirculo(C, 16.0, 20.0),
-        "Ponto fora a direita nao deve estar dentro.");
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoCirculo(C, 10.0, 26.0),
-        "Ponto fora acima nao deve estar dentro.");
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoCirculo(C, 4.0, 20.0),
-        "Ponto fora a esquerda nao deve estar dentro.");
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoCirculo(C, 10.0, 14.0),
-        "Ponto fora abaixo nao deve estar dentro.");
-}
-
-void test_contemPonto_CirculoNulo(void)
-{
-    TEST_ASSERT_FALSE_MESSAGE(contemPontoCirculo(NULL, 10.0, 20.0),
-        "NULL deve retornar false.");
-}
-
-/* ─────────────────────────────────────────────
-   dentroRegiaoCirculo
-   ───────────────────────────────────────────── */
-/*
- * Circulo C: centro (10, 20), r=5
- * Deve estar dentro se 10-5 >= rx, 10+5 <= rx+rw, 20-5 >= ry, 20+5 <= ry+rh
- */
-
-void test_dentroRegiao_TotalmenteContido(void)
-{
-    // Regiao maior que o circulo
-    TEST_ASSERT_TRUE_MESSAGE(dentroRegiaoCirculo(C, 0.0, 0.0, 200.0, 200.0),
-        "Circulo deve estar dentro de uma regiao maior.");
-}
-
-void test_dentroRegiao_ExatamenteIgual(void)
-{
-    // Regiao que contem exatamente o circulo
-    TEST_ASSERT_TRUE_MESSAGE(dentroRegiaoCirculo(C, 5.0, 15.0, 10.0, 10.0),
-        "Circulo deve estar dentro de uma regiao que o contem exatamente.");
-}
-
-void test_dentroRegiao_Fora(void)
-{
-    // Regiao menor — circulo nao cabe inteiramente
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoCirculo(C, 6.0, 15.0, 10.0, 10.0),
-        "Circulo nao deve caber em regiao que corta a esquerda.");
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoCirculo(C, 5.0, 16.0, 10.0, 10.0),
-        "Circulo nao deve caber em regiao que corta abaixo.");
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoCirculo(C, 5.0, 15.0, 9.0, 10.0),
-        "Circulo nao deve caber em regiao que corta a direita.");
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoCirculo(C, 5.0, 15.0, 10.0, 9.0),
-        "Circulo nao deve caber em regiao que corta acima.");
-}
-
-void test_dentroRegiao_RegiaoZero(void)
-{
-    // Regiao com largura zero
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoCirculo(C, 5.0, 15.0, 0.0, 10.0),
-        "Circulo nao deve caber em regiao com w=0.");
-    // Regiao com altura zero
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoCirculo(C, 5.0, 15.0, 10.0, 0.0),
-        "Circulo nao deve caber em regiao com h=0.");
-}
-
-void test_dentroRegiao_CirculoNulo(void)
-{
-    TEST_ASSERT_FALSE_MESSAGE(dentroRegiaoCirculo(NULL, 0.0, 0.0, 200.0, 200.0),
-        "NULL deve retornar false.");
-}
-
-/* ─────────────────────────────────────────────
-   main
-   ───────────────────────────────────────────── */
+/* -------------------------------------------------------------------------- */
+/*  Runner                                                                    */
+/* -------------------------------------------------------------------------- */
 
 int main(void)
 {
     UNITY_BEGIN();
 
-    RUN_TEST(test_criaCirculo_Valido);
-    RUN_TEST(test_criaCirculo_Nulo_CorNula);
-    RUN_TEST(test_criaCirculo_DimensaoInvalida);
-    RUN_TEST(test_criaCirculo_IdInvalido);
+    RUN_TEST(test_criar_nao_retorna_nulo);
+    RUN_TEST(test_getters_basicos);
+    RUN_TEST(test_getters_de_cor);
+    RUN_TEST(test_cores_sao_copiadas_na_criacao);
 
-    RUN_TEST(test_Getters_CirculoNulo);
+    RUN_TEST(test_area);
+    RUN_TEST(test_largura_eh_diametro);
+    RUN_TEST(test_altura_eh_diametro);
 
-    RUN_TEST(test_translada_DeslocamentoPositivo);
-    RUN_TEST(test_translada_DeslocamentoNegativo);
-    RUN_TEST(test_translada_DeslocamentoZero);
-    RUN_TEST(test_translada_NaoAlteraRaio);
-    RUN_TEST(test_translada_CirculoNulo);
+    RUN_TEST(test_mover_desloca_o_centro);
+    RUN_TEST(test_mover_nao_altera_raio);
+    RUN_TEST(test_set_cores_atualiza);
+    RUN_TEST(test_set_cores_copia_os_argumentos);
 
-    RUN_TEST(test_setCores_Valido);
-    RUN_TEST(test_setCores_MesmaCor);
-    RUN_TEST(test_setCores_UmaCorNula);
-    RUN_TEST(test_StringsDuplicadas);
+    RUN_TEST(test_clone_copia_atributos_com_novo_id);
+    RUN_TEST(test_clone_eh_independente);
 
-    RUN_TEST(test_contemPonto_Dentro);
-    RUN_TEST(test_contemPonto_NasBordas);
-    RUN_TEST(test_contemPonto_Fora);
-    RUN_TEST(test_contemPonto_CirculoNulo);
-
-    RUN_TEST(test_dentroRegiao_TotalmenteContido);
-    RUN_TEST(test_dentroRegiao_ExatamenteIgual);
-    RUN_TEST(test_dentroRegiao_Fora);
-    RUN_TEST(test_dentroRegiao_RegiaoZero);
-    RUN_TEST(test_dentroRegiao_CirculoNulo);
+    RUN_TEST(test_destruir_nulo_eh_seguro);
 
     return UNITY_END();
 }
