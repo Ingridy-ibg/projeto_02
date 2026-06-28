@@ -1,25 +1,18 @@
-/**
- * @file circulo.c
- * @brief Implementação do TAD Circulo (contrato em circulo.h).
- */
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "circulo.h"
 
-/* PI em precisão dupla. Definido aqui porque M_PI não é garantido pelo
-   <math.h> sob -std=c99 estrito. */
 #define PI 3.14159265358979323846
 
-/* Definição concreta do tipo. Fica no .c (proibido struct no .h). */
 struct circulo {
     int    id;
     double x;     /* x do centro (âncora) */
     double y;     /* y do centro (âncora) */
     double r;     /* raio */
-    char  *corb;  /* cor da borda (string própria) */
-    char  *corp;  /* cor de preenchimento (string própria) */
+    char  *corb;  /* cor da borda */
+    char  *corp;  /* cor de preenchimento*/
 };
 
 /* Duplica uma string em memória própria. Substitui strdup() para não depender
@@ -41,9 +34,6 @@ static char *dup_str(const char *s)
     return novo;
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Criação / clonagem / destruição                                           */
-/* -------------------------------------------------------------------------- */
 
 Circulo circulo_criar(int id, double x, double y, double r,
                       const char *corb, const char *corp)
@@ -75,7 +65,6 @@ Circulo circulo_clonar(Circulo c, int novo_id)
     if (c == NULL) {
         return NULL;
     }
-    /* Reaproveita circulo_criar, que já copia as cores -> clone independente. */
     return circulo_criar(novo_id, c->x, c->y, c->r, c->corb, c->corp);
 }
 
@@ -88,10 +77,6 @@ void circulo_destruir(Circulo c)
     free(c->corp);
     free(c);
 }
-
-/* -------------------------------------------------------------------------- */
-/*  Consultas (getters)                                                       */
-/* -------------------------------------------------------------------------- */
 
 int circulo_get_id(Circulo c)
 {
@@ -132,19 +117,12 @@ double circulo_area(Circulo c)
     return PI * c->r * c->r;
 }
 
-double circulo_largura(Circulo c)
+double circulo_diametro(Circulo c)
 {
-    return 2.0 * c->r;   /* diâmetro */
+    return 2.0 * c->r;  
 }
 
-double circulo_altura(Circulo c)
-{
-    return 2.0 * c->r;   /* diâmetro */
-}
 
-/* -------------------------------------------------------------------------- */
-/*  Modificações                                                              */
-/* -------------------------------------------------------------------------- */
 
 void circulo_mover(Circulo c, double dx, double dy)
 {

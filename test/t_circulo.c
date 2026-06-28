@@ -1,15 +1,3 @@
-/**
- * @file t_circulo.c
- * @brief Testes unitários do TAD Circulo (framework Unity).
- *
- * Compilação (exemplo de target no Makefile):
- *   gcc -std=c99 -fstack-protector-all -Wall -Wextra -g \
- *       -DUNITY_INCLUDE_DOUBLE \
- *       t_circulo.c circulo.c unity.c -o t_circulo -lm
- *
- * Obs.: a flag -DUNITY_INCLUDE_DOUBLE habilita TEST_ASSERT_DOUBLE_WITHIN.
- */
-
 #include "unity.h"
 #include "../src/circulo.h"
 
@@ -32,9 +20,6 @@ void tearDown(void)
     c = NULL;
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Criação e getters                                                         */
-/* -------------------------------------------------------------------------- */
 
 void test_criar_nao_retorna_nulo(void)
 {
@@ -74,9 +59,6 @@ void test_cores_sao_copiadas_na_criacao(void)
     circulo_destruir(cc);
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Atributos derivados                                                       */
-/* -------------------------------------------------------------------------- */
 
 void test_area(void)
 {
@@ -94,9 +76,6 @@ void test_altura_eh_diametro(void)
     TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, circulo_altura(c));
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Modificações                                                              */
-/* -------------------------------------------------------------------------- */
 
 void test_mover_desloca_o_centro(void)
 {
@@ -132,9 +111,6 @@ void test_set_cores_copia_os_argumentos(void)
     TEST_ASSERT_EQUAL_STRING("magenta", circulo_get_cor_preenchimento(c));
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Clonagem                                                                  */
-/* -------------------------------------------------------------------------- */
 
 void test_clone_copia_atributos_com_novo_id(void)
 {
@@ -168,20 +144,15 @@ void test_clone_eh_independente(void)
     circulo_destruir(clone);
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Robustez                                                                  */
-/* -------------------------------------------------------------------------- */
 
-/* circulo_destruir(NULL) deve ser seguro (no-op). */
+
+/* circulo_destruir deve ser seguro (no-op). */
 void test_destruir_nulo_eh_seguro(void)
 {
     circulo_destruir(NULL);
     TEST_PASS();
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Runner                                                                    */
-/* -------------------------------------------------------------------------- */
 
 int main(void)
 {

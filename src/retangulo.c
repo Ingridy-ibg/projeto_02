@@ -1,22 +1,16 @@
-/**
- * @file retangulo.c
- * @brief Implementação do TAD Retangulo (contrato em retangulo.h).
- */
-
 #include <stdlib.h>
 #include <string.h>
 
 #include "retangulo.h"
 
-/* Definição concreta do tipo. Fica no .c (proibido struct no .h). */
 struct retangulo {
     int    id;
     double x;     /* x do canto inferior esquerdo (âncora) */
     double y;     /* y do canto inferior esquerdo (âncora) */
     double w;     /* largura */
     double h;     /* altura  */
-    char  *corb;  /* cor da borda (string própria) */
-    char  *corp;  /* cor de preenchimento (string própria) */
+    char  *corb;  /* cor da borda */
+    char  *corp;  /* cor de preenchimento */
 };
 
 /* Duplica uma string em memória própria. Substitui strdup() para não depender
@@ -36,10 +30,6 @@ static char *dup_str(const char *s)
     }
     return novo;
 }
-
-/* -------------------------------------------------------------------------- */
-/*  Criação / clonagem / destruição                                           */
-/* -------------------------------------------------------------------------- */
 
 Retangulo retangulo_criar(int id, double x, double y, double w, double h,
                           const char *corb, const char *corp)
@@ -85,9 +75,6 @@ void retangulo_destruir(Retangulo r)
     free(r);
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Consultas (getters)                                                       */
-/* -------------------------------------------------------------------------- */
 
 int retangulo_get_id(Retangulo r)
 {
@@ -124,18 +111,11 @@ const char *retangulo_get_cor_preenchimento(Retangulo r)
     return r->corp;
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Atributos derivados                                                       */
-/* -------------------------------------------------------------------------- */
 
 double retangulo_area(Retangulo r)
 {
     return r->w * r->h;
 }
-
-/* -------------------------------------------------------------------------- */
-/*  Modificações                                                              */
-/* -------------------------------------------------------------------------- */
 
 void retangulo_mover(Retangulo r, double dx, double dy)
 {

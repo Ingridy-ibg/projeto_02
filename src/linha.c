@@ -1,22 +1,16 @@
-/**
- * @file linha.c
- * @brief Implementação do TAD Linha (contrato em linha.h).
- */
-
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
 #include "linha.h"
 
-/* Definição concreta do tipo. Fica no .c (proibido struct no .h). */
 struct linha {
     int    id;
     double x1;
     double y1;
     double x2;
     double y2;
-    char  *cor;   /* cor própria (string alocada) */
+    char  *cor;  
 };
 
 /* Duplica uma string em memória própria. Substitui strdup() para não depender
@@ -37,9 +31,6 @@ static char *dup_str(const char *s)
     return novo;
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Criação / clonagem / destruição                                           */
-/* -------------------------------------------------------------------------- */
 
 Linha linha_criar(int id, double x1, double y1, double x2, double y2,
                   const char *cor)
@@ -80,9 +71,6 @@ void linha_destruir(Linha l)
     free(l);
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Consultas (getters)                                                       */
-/* -------------------------------------------------------------------------- */
 
 int linha_get_id(Linha l)
 {
@@ -114,9 +102,6 @@ const char *linha_get_cor(Linha l)
     return l->cor;
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Atributos derivados                                                       */
-/* -------------------------------------------------------------------------- */
 
 double linha_comprimento(Linha l)
 {
@@ -132,7 +117,7 @@ double linha_largura(Linha l)
 
 double linha_altura(Linha l)
 {
-    (void) l;            /* altura é constante; parâmetro mantido por contrato */
+    (void) l;            // altura é constante;
     return 1.5;
 }
 
@@ -141,9 +126,6 @@ double linha_area(Linha l)
     return 1.5 * linha_comprimento(l);
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Modificações                                                              */
-/* -------------------------------------------------------------------------- */
 
 void linha_mover(Linha l, double dx, double dy)
 {

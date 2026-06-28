@@ -1,14 +1,3 @@
-/**
- * @file t_retangulo.c
- * @brief Testes unitários do TAD Retangulo (framework Unity).
- *
- * Compilação (exemplo):
- *   gcc -std=c99 -fstack-protector-all -Wall -Wextra -g \
- *       -DUNITY_INCLUDE_DOUBLE \
- *       test/t_retangulo.c src/retangulo.c Unity/src/unity.c \
- *       -o test/t_retangulo -lm
- */
-
 #include "unity.h"
 #include "../src/retangulo.h"
 
@@ -28,9 +17,6 @@ void tearDown(void)
     r = NULL;
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Criação e getters                                                         */
-/* -------------------------------------------------------------------------- */
 
 void test_criar_nao_retorna_nulo(void)
 {
@@ -52,7 +38,7 @@ void test_getters_de_cor(void)
     TEST_ASSERT_EQUAL_STRING("yellow", retangulo_get_cor_preenchimento(r));
 }
 
-/* As cores devem ser COPIADAS na criação. */
+/* As cores devem ser copiadas na criação. */
 void test_cores_sao_copiadas_na_criacao(void)
 {
     char borda[] = "blue";
@@ -70,19 +56,11 @@ void test_cores_sao_copiadas_na_criacao(void)
     retangulo_destruir(rr);
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Atributos derivados                                                       */
-/* -------------------------------------------------------------------------- */
-
 void test_area(void)
 {
     /* 4 * 5 = 20 */
     TEST_ASSERT_DOUBLE_WITHIN(EPS, 20.0, retangulo_area(r));
 }
-
-/* -------------------------------------------------------------------------- */
-/*  Modificações                                                              */
-/* -------------------------------------------------------------------------- */
 
 void test_mover_desloca_a_ancora(void)
 {
@@ -118,9 +96,6 @@ void test_set_cores_copia_os_argumentos(void)
     TEST_ASSERT_EQUAL_STRING("magenta", retangulo_get_cor_preenchimento(r));
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Clonagem                                                                  */
-/* -------------------------------------------------------------------------- */
 
 void test_clone_copia_atributos_com_novo_id(void)
 {
@@ -154,19 +129,12 @@ void test_clone_eh_independente(void)
     retangulo_destruir(clone);
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Robustez                                                                  */
-/* -------------------------------------------------------------------------- */
-
 void test_destruir_nulo_eh_seguro(void)
 {
     retangulo_destruir(NULL);
     TEST_PASS();
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Runner                                                                    */
-/* -------------------------------------------------------------------------- */
 
 int main(void)
 {

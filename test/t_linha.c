@@ -1,19 +1,8 @@
-/**
- * @file t_linha.c
- * @brief Testes unitários do TAD Linha (framework Unity).
- *
- * Compilação (exemplo):
- *   gcc -std=c99 -fstack-protector-all -Wall -Wextra -g \
- *       -DUNITY_INCLUDE_DOUBLE \
- *       test/t_linha.c src/linha.c Unity/src/unity.c -o test/t_linha -lm
- */
-
 #include "unity.h"
 #include "../src/linha.h"
 
 #define EPS 1e-9
 
-/* Linha padrão: de (0,0) a (3,4) -> comprimento 5 (triângulo 3-4-5). */
 static Linha l;
 
 void setUp(void)
@@ -26,10 +15,6 @@ void tearDown(void)
     linha_destruir(l);
     l = NULL;
 }
-
-/* -------------------------------------------------------------------------- */
-/*  Criação e getters                                                         */
-/* -------------------------------------------------------------------------- */
 
 void test_criar_nao_retorna_nulo(void)
 {
@@ -50,7 +35,7 @@ void test_getter_de_cor(void)
     TEST_ASSERT_EQUAL_STRING("blue", linha_get_cor(l));
 }
 
-/* A cor deve ser COPIADA na criação. */
+/* A cor deve ser copiada na criação. */
 void test_cor_eh_copiada_na_criacao(void)
 {
     char cor[] = "green";
@@ -63,9 +48,6 @@ void test_cor_eh_copiada_na_criacao(void)
     linha_destruir(ll);
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Atributos derivados                                                       */
-/* -------------------------------------------------------------------------- */
 
 void test_comprimento(void)
 {
@@ -88,9 +70,6 @@ void test_area(void)
     TEST_ASSERT_DOUBLE_WITHIN(1e-9, 7.5, linha_area(l));
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Modificações                                                              */
-/* -------------------------------------------------------------------------- */
 
 void test_mover_translada_ambas_extremidades(void)
 {
@@ -121,9 +100,6 @@ void test_set_cor_copia_o_argumento(void)
     TEST_ASSERT_EQUAL_STRING("purple", linha_get_cor(l));
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Clonagem                                                                  */
-/* -------------------------------------------------------------------------- */
 
 void test_clone_copia_atributos_com_novo_id(void)
 {
@@ -155,19 +131,12 @@ void test_clone_eh_independente(void)
     linha_destruir(clone);
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Robustez                                                                  */
-/* -------------------------------------------------------------------------- */
 
 void test_destruir_nulo_eh_seguro(void)
 {
     linha_destruir(NULL);
     TEST_PASS();
 }
-
-/* -------------------------------------------------------------------------- */
-/*  Runner                                                                    */
-/* -------------------------------------------------------------------------- */
 
 int main(void)
 {
