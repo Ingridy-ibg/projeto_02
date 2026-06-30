@@ -37,7 +37,9 @@ src/texto.o: src/texto.c src/texto.h
 
 test/t_texto.o: test/t_texto.c src/texto.h Unity/src/unity.h
 
+test/t_forma.o: test/t_forma.c src/forma.h Unity/src/unity.h
 
+src/forma.o: src/forma.c src/forma.h
 
 
 
@@ -66,7 +68,12 @@ t_texto: test/t_texto.o src/texto.o Unity/src/unity.o
 		-o test/t_texto $(LIBS)
 	./test/t_texto
 
-tstall: t_retangulo t_circulo t_linha t_texto
+t_forma: test/t_forma.o src/retangulo.o src/circulo.o src/linha.o src/texto.o Unity/src/unity.o
+	$(CC) $(LDFLAGS) test/t_forma.o src/retangulo.o src/circulo.o src/linha.o src/texto.o Unity/src/unity.o \
+		-o test/t_forma $(LIBS)
+	./test/t_forma
+
+tstall: t_retangulo t_circulo t_linha t_texto t_forma
 
 
 # ─── Utilitários ─────────────────────────────────────────────────
@@ -84,6 +91,10 @@ clean:
 		src/texto.o \
 		test/t_texto.o \
 		test/t_texto \
+		test/t_forma.o \
+		test/t_forma \
+		src/forma.o \
+
 		src/$(PROJ_NAME)
 
 run: $(PROJ_NAME)
