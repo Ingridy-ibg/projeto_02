@@ -143,7 +143,7 @@ double forma_area(Forma f)
 double forma_largura(Forma f)
 {
     switch (f->tipo) {
-        case TIPO_CIRCULO:   return circulo_largura(f->esp);
+        case TIPO_CIRCULO:   return circulo_diametro(f->esp);
         case TIPO_RETANGULO: return retangulo_get_largura(f->esp);
         case TIPO_LINHA:     return linha_largura(f->esp);
         case TIPO_TEXTO:     return texto_largura(f->esp);
@@ -154,7 +154,7 @@ double forma_largura(Forma f)
 double forma_altura(Forma f)
 {
     switch (f->tipo) {
-        case TIPO_CIRCULO:   return circulo_altura(f->esp);
+        case TIPO_CIRCULO:   return circulo_diametro(f->esp);
         case TIPO_RETANGULO: return retangulo_get_altura(f->esp);
         case TIPO_LINHA:     return linha_altura(f->esp);
         case TIPO_TEXTO:     return texto_altura(f->esp);
