@@ -33,6 +33,12 @@ src/linha.o: src/linha.c src/linha.h
 
 test/t_linha.o: test/t_linha.c src/linha.h Unity/src/unity.h
 
+src/texto.o: src/texto.c src/texto.h
+
+test/t_texto.o: test/t_texto.c src/texto.h Unity/src/unity.h
+
+
+
 
 
 
@@ -55,23 +61,30 @@ t_linha: test/t_linha.o src/linha.o Unity/src/unity.o
 		-o test/t_linha $(LIBS)
 	./test/t_linha
 
+t_texto: test/t_texto.o src/texto.o Unity/src/unity.o
+	$(CC) $(LDFLAGS) test/t_texto.o src/texto.o Unity/src/unity.o \
+		-o test/t_texto $(LIBS)
+	./test/t_texto
 
-tstall: t_retangulo t_circulo t_linha
+tstall: t_retangulo t_circulo t_linha t_texto
 
 
 # ─── Utilitários ─────────────────────────────────────────────────
 clean:
 	rm -f src/retangulo.o \
 		Unity/src/unity.o \
-		  test/t_retangulo.o \
-		  test/t_retangulo \
-		  test/t_circulo.o \
-		  test/t_circulo\
-		  src/circulo.o\
-		  src/linha.o\
-		test\t_linha.o\
-		test\t_linha\
-		  src/$(PROJ_NAME)
+		test/t_retangulo.o \
+		test/t_retangulo \
+		test/t_circulo.o \
+		test/t_circulo \
+		src/circulo.o \
+		src/linha.o \
+		test/t_linha.o \
+		test/t_linha \
+		src/texto.o \
+		test/t_texto.o \
+		test/t_texto \
+		src/$(PROJ_NAME)
 
 run: $(PROJ_NAME)
 	./src/$(PROJ_NAME)
