@@ -68,7 +68,7 @@ t_texto: test/t_texto.o src/texto.o Unity/src/unity.o
 		-o test/t_texto $(LIBS)
 	./test/t_texto
 
-t_forma: test/t_forma.o src/retangulo.o src/circulo.o src/linha.o src/texto.o Unity/src/unity.o
+t_forma: test/t_forma.o src/forma.o src/retangulo.o src/circulo.o src/linha.o src/texto.o Unity/src/unity.o
 	$(CC) $(LDFLAGS) test/t_forma.o src/retangulo.o src/circulo.o src/linha.o src/texto.o Unity/src/unity.o \
 		-o test/t_forma $(LIBS)
 	./test/t_forma
