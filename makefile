@@ -44,6 +44,10 @@ src/forma.o: src/forma.c src/forma.h src/circulo.h src/retangulo.h src/linha.h s
 
 test/t_forma.o: test/t_forma.c src/forma.h src/circulo.h src/retangulo.h src/linha.h src/texto.h Unity/src/unity.h
 
+src/lista.o: src/lista.c src/lista.h
+
+test/t_lista.o: test/t_lista.c src/lista.h Unity/src/unity.h
+
 
 
 
@@ -76,8 +80,13 @@ t_forma: test/t_forma.o src/forma.o src/circulo.o src/retangulo.o src/linha.o sr
 		-o test/t_forma $(LIBS)
 	./test/t_forma
 
+t_lista: test/t_lista.o src/lista.o $(UNITY_OBJ)
+	$(CC) $(LDFLAGS) test/t_lista.o src/lista.o $(UNITY_OBJ) \
+		-o test/t_lista $(LIBS)
+	./test/t_lista
 
-tstall: t_retangulo t_circulo t_linha t_texto t_forma
+
+tstall: t_retangulo t_circulo t_linha t_texto t_forma t_lista
 
 
 # ─── Utilitários ─────────────────────────────────────────────────
@@ -87,6 +96,7 @@ clean:
 		src/linha.o test/t_linha.o test/t_linha \
 		src/texto.o test/t_texto.o test/t_texto \
 		src/forma.o test/t_forma.o test/t_forma \
+		src/lista.o test/t_lista.o test/t_lista \
 		Unity/src/unity.o \
 		src/$(PROJ_NAME)
 
