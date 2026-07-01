@@ -1,13 +1,3 @@
-/**
- * @file t_forma.c
- * @brief Testes unitários do wrapper Forma (framework Unity).
- *
- * Compilação (exemplo):
- *   gcc -std=c99 -fstack-protector-all -Wall -Wextra -g -DUNITY_INCLUDE_DOUBLE \
- *       test/t_forma.c src/forma.c src/circulo.c src/retangulo.c \
- *       src/linha.c src/texto.c Unity/src/unity.c -o test/t_forma -lm
- */
-
 #include "unity.h"
 #include "../src/forma.h"
 #include "../src/circulo.h"

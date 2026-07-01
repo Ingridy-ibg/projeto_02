@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "unity.h"
-#include "abb.h"
+#include "../src/abb.h"
 
 static int cmp_int(Item a, Item b)
 {
