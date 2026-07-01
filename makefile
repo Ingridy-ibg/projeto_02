@@ -65,17 +65,17 @@ t_retangulo: test/t_retangulo.o src/retangulo.o $(UNITY_OBJ)
 	./test/t_retangulo
 
 t_circulo: test/t_circulo.o src/circulo.o $(UNITY_OBJ)
-	$(CC) $(LDFLAGS) test/t_circulo.o src/circulo.o Unity/src/unity.o \
+	$(CC) $(LDFLAGS) test/t_circulo.o src/circulo.o \
 		-o test/t_circulo $(LIBS)
 	./test/t_circulo	
 
-t_linha: test/t_linha.o src/linha.o Unity/src/unity.o $(UNITY_OBJ)
-	$(CC) $(LDFLAGS) test/t_linha.o src/linha.o Unity/src/unity.o \
+t_linha: test/t_linha.o src/linha.o $(UNITY_OBJ)
+	$(CC) $(LDFLAGS) test/t_linha.o src/linha.o  $(UNITY_OBJ) \
 		-o test/t_linha $(LIBS)
 	./test/t_linha
 
-t_texto: test/t_texto.o src/texto.o Unity/src/unity.o $(UNITY_OBJ)
-	$(CC) $(LDFLAGS) test/t_texto.o src/texto.o Unity/src/unity.o \
+t_texto: test/t_texto.o src/texto.o $(UNITY_OBJ)
+	$(CC) $(LDFLAGS) test/t_texto.o src/texto.o $(UNITY_OBJ) \
 		-o test/t_texto $(LIBS)
 	./test/t_texto
 
