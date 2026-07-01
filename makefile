@@ -48,6 +48,10 @@ src/lista.o: src/lista.c src/lista.h
 
 test/t_lista.o: test/t_lista.c src/lista.h Unity/src/unity.h
 
+test/t_abb.o: test/t_abb.c src/abb.h Unity/src/unity.h
+
+src/abb.o: src/abb.c src/abb.h
+
 
 
 
@@ -85,8 +89,12 @@ t_lista: test/t_lista.o src/lista.o $(UNITY_OBJ)
 		-o test/t_lista $(LIBS)
 	./test/t_lista
 
+t_abb: test/t_abb.o src/abb.o $(UNITY_OBJ)
+	$(CC) $(LDFLAGS) test/t_abb.o src/abb.o $(UNITY_OBJ) \
+		-o test/t_abb $(LIBS)
+	./test/t_abb
 
-tstall: t_retangulo t_circulo t_linha t_texto t_forma t_lista
+tstall: t_retangulo t_circulo t_linha t_texto t_forma t_lista t_abb
 
 
 # ─── Utilitários ─────────────────────────────────────────────────
@@ -97,6 +105,7 @@ clean:
 		src/texto.o test/t_texto.o test/t_texto \
 		src/forma.o test/t_forma.o test/t_forma \
 		src/lista.o test/t_lista.o test/t_lista \
+		src/abb.o test/t_abb.o test/t_abb \
 		Unity/src/unity.o \
 		src/$(PROJ_NAME)
 
