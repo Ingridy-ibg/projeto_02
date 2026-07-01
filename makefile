@@ -52,6 +52,10 @@ test/t_abb.o: test/t_abb.c src/abb.h Unity/src/unity.h
 
 src/abb.o: src/abb.c src/abb.h
 
+src/ordenacao.o: src/ordenacao.c src/ordenacao.h
+
+test/t_ordenacao.o: test/t_ordenacao.c src/ordenacao.h Unity/src/unity.h
+
 
 
 
@@ -94,7 +98,12 @@ t_abb: test/t_abb.o src/abb.o $(UNITY_OBJ)
 		-o test/t_abb $(LIBS)
 	./test/t_abb
 
-tstall: t_retangulo t_circulo t_linha t_texto t_forma t_lista t_abb
+t_ordenacao: test/t_ordenacao.o src/ordenacao.o $(UNITY_OBJ)
+	$(CC) $(LDFLAGS) test/t_ordenacao.o src/ordenacao.o $(UNITY_OBJ) \
+		-o test/t_ordenacao $(LIBS)
+	./test/t_ordenacao
+
+tstall: t_retangulo t_circulo t_linha t_texto t_forma t_lista t_abb t_ordenacao
 
 
 # ─── Utilitários ─────────────────────────────────────────────────
