@@ -65,7 +65,7 @@ t_retangulo: test/t_retangulo.o src/retangulo.o $(UNITY_OBJ)
 	./test/t_retangulo
 
 t_circulo: test/t_circulo.o src/circulo.o $(UNITY_OBJ)
-	$(CC) $(LDFLAGS) test/t_circulo.o src/circulo.o \
+	$(CC) $(LDFLAGS) test/t_circulo.o src/circulo.o $(UNITY_OBJ) \
 		-o test/t_circulo $(LIBS)
 	./test/t_circulo	
 
