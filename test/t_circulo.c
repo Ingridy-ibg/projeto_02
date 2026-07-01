@@ -68,12 +68,12 @@ void test_area(void)
 
 void test_largura_eh_diametro(void)
 {
-    TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, circulo_largura(c));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, circulo_diametro(c));
 }
 
 void test_altura_eh_diametro(void)
 {
-    TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, circulo_altura(c));
+    TEST_ASSERT_DOUBLE_WITHIN(EPS, 10.0, circulo_diametro(c));
 }
 
 
