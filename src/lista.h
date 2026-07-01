@@ -16,7 +16,7 @@ Lista lista_criar(void);
 /**
  * @brief Libera a lista.
  *
- * @param l            Lista a destruir.
+ * @param l            Lista a destruir
  * @param libera_item  Destrutor por item, ou NULL para não liberar os itens.
  */
 void lista_destruir(Lista l, void (*libera_item)(Item));
