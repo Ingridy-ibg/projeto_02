@@ -7,7 +7,6 @@
 
 #include "lista.h"
 
-/* Nó da lista. Definições de struct ficam no .c (proibido no .h). */
 struct no {
     Item       item;
     struct no *prox;
@@ -18,10 +17,6 @@ struct lista {
     struct no *fim;
     int        n;
 };
-
-/* -------------------------------------------------------------------------- */
-/*  Criação / destruição                                                      */
-/* -------------------------------------------------------------------------- */
 
 Lista lista_criar(void)
 {
@@ -55,9 +50,6 @@ void lista_destruir(Lista l, void (*libera_item)(Item))
     free(l);
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Inserção                                                                  */
-/* -------------------------------------------------------------------------- */
 
 int lista_inserir_inicio(Lista l, Item it)
 {
@@ -68,7 +60,7 @@ int lista_inserir_inicio(Lista l, Item it)
     novo->item = it;
     novo->prox = l->inicio;
     l->inicio  = novo;
-    if (l->fim == NULL) {     /* lista estava vazia */
+    if (l->fim == NULL) {     
         l->fim = novo;
     }
     l->n++;
@@ -83,7 +75,7 @@ int lista_inserir_fim(Lista l, Item it)
     }
     novo->item = it;
     novo->prox = NULL;
-    if (l->fim == NULL) {     /* lista vazia */
+    if (l->fim == NULL) {    
         l->inicio = novo;
     } else {
         l->fim->prox = novo;
@@ -93,9 +85,6 @@ int lista_inserir_fim(Lista l, Item it)
     return 1;
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Remoção                                                                   */
-/* -------------------------------------------------------------------------- */
 
 int lista_remover(Lista l, Item it)
 {
@@ -106,12 +95,12 @@ int lista_remover(Lista l, Item it)
         if (atual->item == it) {
             /* desencadeia o nó */
             if (ant == NULL) {
-                l->inicio = atual->prox;     /* removendo o primeiro */
+                l->inicio = atual->prox;     
             } else {
                 ant->prox = atual->prox;
             }
             if (atual == l->fim) {
-                l->fim = ant;                /* removendo o último */
+                l->fim = ant;              
             }
             free(atual);
             l->n--;
@@ -123,9 +112,6 @@ int lista_remover(Lista l, Item it)
     return 0;   /* não encontrado */
 }
 
-/* -------------------------------------------------------------------------- */
-/*  Consultas                                                                 */
-/* -------------------------------------------------------------------------- */
 
 int lista_tamanho(Lista l)
 {
